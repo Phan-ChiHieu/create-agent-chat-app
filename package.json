@@ -4,7 +4,7 @@
   "description": "Create a LangGraph chat app with one command",
   "repository": {
     "type": "git",
-    "url": "https://github.com/langchain-ai/create-agent-chat-app.git"
+    "url": "git+https://github.com/langchain-ai/create-agent-chat-app.git"
   },
   "homepage": "https://github.com/langchain-ai/create-agent-chat-app/blob/main/README.md",
   "packageManager": "yarn@1.22.22",
