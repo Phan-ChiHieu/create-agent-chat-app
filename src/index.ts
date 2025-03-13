@@ -278,7 +278,13 @@ async function init(): Promise<void> {
     "templates",
     "monorepo",
   );
-  fs.copySync(monorepoTemplateDir, targetDir);
+  fs.copySync(monorepoTemplateDir, targetDir, {
+    dereference: true,
+    filter: (_) => {
+      // Ensure hidden files (like .gitignore) are copied
+      return true;
+    }
+  });
 
   // Create web directory inside apps and copy the framework template
   const appsDir: string = path.join(targetDir, "apps");
@@ -291,7 +297,13 @@ async function init(): Promise<void> {
     "templates",
     framework,
   );
-  fs.copySync(frameworkTemplateDir, webDir);
+  fs.copySync(frameworkTemplateDir, webDir, {
+    dereference: true,
+    filter: (_) => {
+      // Ensure hidden files (like .gitignore) are copied
+      return true;
+    }
+  });
 
   // Get the path to the agents src directory which already exists in the monorepo template
   const agentsDir: string = path.join(appsDir, "agents", "src");
