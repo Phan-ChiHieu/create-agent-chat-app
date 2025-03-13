@@ -10,8 +10,7 @@
     "clean": "rm -rf ./dist .turbo || true",
     "format": "prettier --config .prettierrc --write \"src\"",
     "lint": "eslint src",
-    "lint:fix": "eslint src --fix",
-    "postinstall": "yarn turbo build"
+    "lint:fix": "eslint src --fix"
   },
   "dependencies": {
     "@langchain/core": "^0.3.38",
