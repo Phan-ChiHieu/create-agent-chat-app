@@ -80,9 +80,9 @@ export function ensureAgentConfiguration(
   const baseConfig = ensureBaseConfiguration(config);
   return {
     ...baseConfig,
-    queryModel: configurable.queryModel || "anthropic/claude-3-haiku-20240307",
+    queryModel: configurable.queryModel || "anthropic/claude-3-5-haiku-latest",
     responseModel:
-      configurable.responseModel || "anthropic/claude-3-5-sonnet-20240620",
+      configurable.responseModel || "anthropic/claude-3-7-sonnet-latest",
     routerSystemPrompt: configurable.routerSystemPrompt || ROUTER_SYSTEM_PROMPT,
     moreInfoSystemPrompt:
       configurable.moreInfoSystemPrompt || MORE_INFO_SYSTEM_PROMPT,

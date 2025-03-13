@@ -108,9 +108,9 @@ export function ensureConfiguration(
       configurable.responseSystemPromptTemplate ||
       RESPONSE_SYSTEM_PROMPT_TEMPLATE,
     responseModel:
-      configurable.responseModel || "anthropic/claude-3-5-sonnet-20240620",
+      configurable.responseModel || "anthropic/claude-3-7-sonnet-latest",
     querySystemPromptTemplate:
       configurable.querySystemPromptTemplate || QUERY_SYSTEM_PROMPT_TEMPLATE,
-    queryModel: configurable.queryModel || "anthropic/claude-3-haiku-20240307",
+    queryModel: configurable.queryModel || "anthropic/claude-3-5-haiku-latest",
   };
 }

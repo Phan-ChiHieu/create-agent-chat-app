@@ -13,9 +13,9 @@
     "lint:fix": "eslint src --fix"
   },
   "dependencies": {
-    "@langchain/core": "^0.3.38",
-    "@langchain/langgraph": "^0.2.41",
-    "@langchain/openai": "^0.4.2",
+    "@langchain/core": "^0.3.42",
+    "@langchain/langgraph": "^0.2.55",
+    "langchain": "^0.3.19",
     "dotenv": "^16.4.5",
     "uuid": "^10.0.0",
     "zod": "^3.23.8"

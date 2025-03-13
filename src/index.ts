@@ -139,6 +139,7 @@ async function writeGitignore(
       await fs.promises.writeFile(frameworkGitignorePath, VITE_GITIGNORE);
     }
   } catch (e) {
+    console.error(e);
     console.log(`${chalk.red("Error: ")} Failed to write .gitignore`);
   }
 }
@@ -198,6 +199,167 @@ This will start the web server at:
 And the LangGraph server at:
   ${chalk.cyan("http://localhost:2024")}`;
 };
+
+const AGENT_DEPENDENCIES_MAP = {
+  "react-agent": {
+    "@langchain/community": "^0.3.35",
+    "@langchain/anthropic": "^0.3.15",
+  },
+  "memory-agent": {
+    "@langchain/anthropic": "^0.3.15",
+  },
+  "research-agent": {
+    "@langchain/anthropic": "^0.3.15",
+    "@elastic/elasticsearch": "^8.17.1",
+    "@langchain/community": "^0.3.35",
+    "@langchain/pinecone": "^0.2.0",
+    "@langchain/mongodb": "^0.1.0",
+    mongodb: "^6.14.2",
+    "@pinecone-database/pinecone": "^5.1.1",
+    "@langchain/cohere": "^0.3.2",
+    "@langchain/openai": "^0.4.4",
+  },
+  "retrieval-agent": {
+    "@langchain/anthropic": "^0.3.15",
+    "@elastic/elasticsearch": "^8.17.1",
+    "@langchain/community": "^0.3.35",
+    "@langchain/pinecone": "^0.2.0",
+    "@langchain/mongodb": "^0.1.0",
+    mongodb: "^6.14.2",
+    "@pinecone-database/pinecone": "^5.1.1",
+    "@langchain/cohere": "^0.3.2",
+    "@langchain/openai": "^0.4.4",
+  },
+};
+
+async function setAgentPackageJsonFields(
+  baseDir: string,
+  args: {
+    includeReactAgent: boolean;
+    includeMemoryAgent: boolean;
+    includeResearchAgent: boolean;
+    includeRetrievalAgent: boolean;
+  },
+  chalk: ChalkInstance,
+): Promise<void> {
+  try {
+    const agentsPkgJsonPath = path.join(
+      baseDir,
+      "apps",
+      "agents",
+      "package.json",
+    );
+    const pkgJson: Record<string, any> = JSON.parse(
+      await fs.promises.readFile(agentsPkgJsonPath, "utf8"),
+    );
+    const requiredPackages: Record<string, string> = {};
+    if (args.includeReactAgent) {
+      Object.assign(requiredPackages, AGENT_DEPENDENCIES_MAP["react-agent"]);
+    }
+    if (args.includeMemoryAgent) {
+      Object.assign(requiredPackages, AGENT_DEPENDENCIES_MAP["memory-agent"]);
+    }
+    if (args.includeResearchAgent) {
+      Object.assign(requiredPackages, AGENT_DEPENDENCIES_MAP["research-agent"]);
+    }
+    if (args.includeRetrievalAgent) {
+      Object.assign(
+        requiredPackages,
+        AGENT_DEPENDENCIES_MAP["retrieval-agent"],
+      );
+    }
+    pkgJson.dependencies = {
+      ...pkgJson.dependencies,
+      ...requiredPackages,
+    };
+    await fs.promises.writeFile(
+      agentsPkgJsonPath,
+      JSON.stringify(pkgJson, null, 2),
+    );
+  } catch (e) {
+    console.log(
+      `${chalk.red("Error: ")} Failed to set agent package.json fields`,
+    );
+  }
+}
+
+const AGENT_ENV_VARS_MAP = {
+  "react-agent": ["TAVILY_API_KEY", "ANTHROPIC_API_KEY"],
+  "memory-agent": ["ANTHROPIC_API_KEY"],
+  "research-agent": [
+    "ANTHROPIC_API_KEY",
+    "ELASTICSEARCH_URL",
+    "ELASTICSEARCH_USER",
+    "ELASTICSEARCH_PASSWORD",
+    "ELASTICSEARCH_API_KEY",
+    "MONGODB_URI",
+    "PINECONE_API_KEY",
+    "PINECONE_ENVIRONMENT",
+    "PINECONE_INDEX_NAME",
+    "COHERE_API_KEY",
+    "OPENAI_API_KEY",
+  ],
+  "retrieval-agent": [
+    "ANTHROPIC_API_KEY",
+    "ELASTICSEARCH_URL",
+    "ELASTICSEARCH_USER",
+    "ELASTICSEARCH_PASSWORD",
+    "ELASTICSEARCH_API_KEY",
+    "MONGODB_URI",
+    "PINECONE_API_KEY",
+    "PINECONE_ENVIRONMENT",
+    "PINECONE_INDEX_NAME",
+    "COHERE_API_KEY",
+    "OPENAI_API_KEY",
+  ],
+};
+
+async function setEnvExampleFile(
+  baseDir: string,
+  args: {
+    includeReactAgent: boolean;
+    includeMemoryAgent: boolean;
+    includeResearchAgent: boolean;
+    includeRetrievalAgent: boolean;
+  },
+  chalk: ChalkInstance,
+): Promise<void> {
+  try {
+    const envExamplePath = path.join(baseDir, ".env.example");
+    const requiredEnvVarsSet = new Set<string>();
+    if (args.includeReactAgent) {
+      AGENT_ENV_VARS_MAP["react-agent"].forEach((v) =>
+        requiredEnvVarsSet.add(v),
+      );
+    }
+    if (args.includeMemoryAgent) {
+      AGENT_ENV_VARS_MAP["memory-agent"].forEach((v) =>
+        requiredEnvVarsSet.add(v),
+      );
+    }
+    if (args.includeResearchAgent) {
+      AGENT_ENV_VARS_MAP["research-agent"].forEach((v) =>
+        requiredEnvVarsSet.add(v),
+      );
+    }
+    if (args.includeRetrievalAgent) {
+      AGENT_ENV_VARS_MAP["retrieval-agent"].forEach((v) =>
+        requiredEnvVarsSet.add(v),
+      );
+    }
+    const requiredEnvVars = Array.from(requiredEnvVarsSet);
+    const baseEnvVars = `LANGSMITH_API_KEY=""
+LANGSMITH_TRACING_V2="true"
+LANGSMITH_PROJECT="default"`;
+
+    const envExampleContent = `${baseEnvVars}\n\n${requiredEnvVars
+      .map((envVar) => `${envVar}=""`)
+      .join("\n")}`;
+    await fs.promises.writeFile(envExamplePath, envExampleContent);
+  } catch (e) {
+    console.log(`${chalk.red("Error: ")} Failed to set env example file`);
+  }
+}
 
 async function init(): Promise<void> {
   console.log(`
@@ -354,13 +516,17 @@ async function init(): Promise<void> {
   );
   fs.copySync(monorepoTemplateDir, targetDir);
 
-  await writeGitignore(targetDir, framework, chalk);
-  await updateLangGraphConfig(targetDir, chalk, {
+  const includesAgentSelectionsMap = {
     includeReactAgent: answers.includeReactAgent,
     includeMemoryAgent: answers.includeMemoryAgent,
     includeResearchAgent: answers.includeResearchAgent,
     includeRetrievalAgent: answers.includeRetrievalAgent,
-  });
+  };
+
+  await writeGitignore(targetDir, framework, chalk);
+  await updateLangGraphConfig(targetDir, chalk, includesAgentSelectionsMap);
+  await setAgentPackageJsonFields(targetDir, includesAgentSelectionsMap, chalk);
+  await setEnvExampleFile(targetDir, includesAgentSelectionsMap, chalk);
 
   // Create web directory inside apps and copy the framework template
   const appsDir: string = path.join(targetDir, "apps");
