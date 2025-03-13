@@ -280,8 +280,9 @@ async function init(): Promise<void> {
   );
   fs.copySync(monorepoTemplateDir, targetDir);
 
-  // Create web directory and copy the framework template
-  const webDir: string = path.join(targetDir, "web");
+  // Create web directory inside apps and copy the framework template
+  const appsDir: string = path.join(targetDir, "apps");
+  const webDir: string = path.join(appsDir, "web");
   fs.mkdirSync(webDir, { recursive: true });
 
   // Copy the framework template to the web directory
@@ -292,9 +293,8 @@ async function init(): Promise<void> {
   );
   fs.copySync(frameworkTemplateDir, webDir);
 
-  // Create agents directory structure
-  const agentsDir: string = path.join(targetDir, "agents", "src");
-  fs.mkdirSync(agentsDir, { recursive: true });
+  // Get the path to the agents src directory which already exists in the monorepo template
+  const agentsDir: string = path.join(appsDir, "agents", "src");
 
   // Copy agent templates if selected
   if (answers.includeAllAgents || answers.includeReactAgent) {
