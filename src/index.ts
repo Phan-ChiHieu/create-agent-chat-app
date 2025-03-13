@@ -2,22 +2,112 @@
 
 import path from "path";
 import fs from "fs-extra";
-import chalk from "chalk";
+import chalk, { ChalkInstance } from "chalk";
 import { fileURLToPath } from "url";
 import prompts from "prompts";
+import { execSync } from "child_process";
 
 // Get the directory name of the current module
 const __filename: string = fileURLToPath(import.meta.url);
 const __dirname: string = path.dirname(__filename);
 
+type PackageManager = "npm" | "pnpm" | "yarn";
+
 interface ProjectAnswers {
+  /**
+   * @default "agent-chat-app"
+   */
   projectName: string;
-  framework: "vite" | "nextjs";
+  /**
+   * @default "npm"
+   */
+  packageManager: PackageManager;
+  /**
+   * @default true
+   */
+  autoInstallDeps: boolean;
+  /**
+   * @default "nextjs"
+   */
+  framework: "nextjs" | "vite";
+  /**
+   * @default true
+   */
   includeAllAgents: boolean;
+  /**
+   * This only runs if you set `includeAllAgents` to false.
+   * @default false
+   */
   includeReactAgent: boolean;
+  /**
+   * This only runs if you set `includeAllAgents` to false.
+   * @default false
+   */
   includeMemoryAgent: boolean;
+  /**
+   * This only runs if you set `includeAllAgents` to false.
+   * @default false
+   */
   includeResearchAgent: boolean;
+  /**
+   * This only runs if you set `includeAllAgents` to false.
+   * @default false
+   */
   includeRetrievalAgent: boolean;
+}
+
+async function createYarnRcYml(
+  baseDir: string,
+  chalk: ChalkInstance,
+): Promise<void> {
+  const yarnRcYmlContents = `nodeLinker: node-modules
+`;
+  const fileName = `.yarnrc.yml`;
+
+  try {
+    await fs.promises.writeFile(
+      path.join(baseDir, fileName),
+      yarnRcYmlContents,
+    );
+  } catch (e) {
+    console.log(`${chalk.red("Error: ")} Failed to create ${fileName}`);
+  }
+}
+
+async function setPackageJsonFields(
+  packageManager: PackageManager,
+  baseDir: string,
+  chalk: ChalkInstance,
+): Promise<void> {
+  // Add the `packageManager` field to package.json
+  const pkgManagerMap = {
+    yarn: "yarn@3.5.1",
+    pnpm: "pnpm@10.6.3",
+    npm: "npm@11.2.1",
+  };
+
+  // Overrides to ensure the same version of @langchain/core is set across all workspaces.
+  const overridesPkgManagerMap = {
+    yarn: "resolutions",
+    pnpm: "resolutions",
+    npm: "overrides",
+  };
+
+  try {
+    const pkgJsonPath = path.join(baseDir, "package.json");
+    const pkgJson: Record<string, any> = JSON.parse(
+      await fs.promises.readFile(pkgJsonPath, "utf8"),
+    );
+    pkgJson.packageManager = `${pkgManagerMap[packageManager]}`;
+    pkgJson[overridesPkgManagerMap[packageManager]] = {
+      "@langchain/core": "^0.3.42",
+    };
+    await fs.promises.writeFile(pkgJsonPath, JSON.stringify(pkgJson, null, 2));
+  } catch (e) {
+    console.log(
+      `${chalk.red("Error: ")} Failed to set package manager in package.json`,
+    );
+  }
 }
 
 async function init(): Promise<void> {
@@ -36,6 +126,23 @@ async function init(): Promise<void> {
     },
     {
       type: "select",
+      name: "packageManager",
+      message: "Which package manager would you like to use?",
+      choices: [
+        { title: "npm", value: "npm" },
+        { title: "pnpm", value: "pnpm" },
+        { title: "yarn", value: "yarn" },
+      ],
+      initial: 0,
+    },
+    {
+      type: "confirm",
+      name: "autoInstallDeps",
+      message: "Would you like to automatically install dependencies?",
+      initial: true,
+    },
+    {
+      type: "select",
       name: "framework",
       message: "Which framework would you like to use?",
       choices: [
@@ -48,7 +155,7 @@ async function init(): Promise<void> {
       type: "confirm",
       name: "includeAllAgents",
       message: "Would you like to include all pre-built agents?",
-      initial: false,
+      initial: true,
     },
   ]);
 
@@ -96,6 +203,8 @@ async function init(): Promise<void> {
 
   // Combine all answers
   const answers: ProjectAnswers = {
+    packageManager: initialQuestions.packageManager,
+    autoInstallDeps: initialQuestions.autoInstallDeps,
     projectName: initialQuestions.projectName,
     framework: initialQuestions.framework,
     includeAllAgents: initialQuestions.includeAllAgents,
@@ -111,7 +220,7 @@ async function init(): Promise<void> {
       !!agentSelections.includeRetrievalAgent,
   };
 
-  const { projectName, framework } = answers;
+  const { projectName, packageManager, autoInstallDeps, framework } = answers;
 
   // Create project directory
   const targetDir: string = path.join(process.cwd(), projectName);
@@ -223,17 +332,64 @@ async function init(): Promise<void> {
     fs.writeFileSync(agentsPkgJsonPath, JSON.stringify(agentsPkgJson, null, 2));
   }
 
-  console.log(chalk.green("\nSuccess!"));
-  console.log(`
+  if (packageManager === "yarn") {
+    await createYarnRcYml(targetDir, chalk);
+  }
+
+  await setPackageJsonFields(packageManager, targetDir, chalk);
+
+  // Install dependencies if autoInstallDeps is true
+  if (autoInstallDeps) {
+    console.log(chalk.yellow("\nInstalling dependencies..."));
+    try {
+      // Navigate to the project directory and run the install command
+      process.chdir(targetDir);
+      execSync(`${packageManager} install`, { stdio: "inherit" });
+      console.log(chalk.green("\nDependencies installed successfully!"));
+
+      console.log(chalk.green("\nSuccess!"));
+      console.log(`
   Your agent chat app has been created at ${chalk.green(targetDir)}
   
   To get started:
     ${chalk.cyan(`cd ${projectName}`)}
-    ${chalk.cyan("pnpm install")}
-    ${chalk.cyan("pnpm dev")}
+    ${chalk.cyan(`${packageManager} dev`)}
   
-  This will start a development server at:
+  This will start the web server at:
     ${chalk.cyan(framework === "nextjs" ? "http://localhost:3000" : "http://localhost:5173")}
+  
+  And the LangGraph server at:
+    ${chalk.cyan("http://localhost:2024")}
+      `);
+    } catch (error) {
+      console.error(chalk.red("\nFailed to install dependencies:"), error);
+      console.log(`
+  Your agent chat app has been created, but dependencies could not be installed automatically.
+  
+  To get started:
+    ${chalk.cyan(`cd ${projectName}`)}
+    ${chalk.cyan(`${packageManager} install`)}
+    ${chalk.cyan(`${packageManager} dev`)}
+      `);
+    }
+    return;
+  }
+
+  // No auto install
+  console.log(chalk.green("\nSuccess!"));
+  console.log(`
+Your agent chat app has been created at ${chalk.green(targetDir)}
+
+To get started:
+  ${chalk.cyan(`cd ${projectName}`)}
+  ${chalk.cyan(`${packageManager} install`)}
+  ${chalk.cyan(`${packageManager} dev`)}
+
+This will start both the web, and LangGraph development servers at:
+  ${chalk.cyan(framework === "nextjs" ? "http://localhost:3000" : "http://localhost:5173")}
+
+And the LangGraph server at:
+  ${chalk.cyan("http://localhost:2024")}
   `);
 }
 
