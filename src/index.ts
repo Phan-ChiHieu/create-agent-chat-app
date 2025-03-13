@@ -110,6 +110,21 @@ async function setPackageJsonFields(
   }
 }
 
+const createStartServersMessage = (
+  chalk: ChalkInstance,
+  packageManager: PackageManager,
+  framework: "nextjs" | "vite",
+): string => {
+  return `Then, start both the web, and LangGraph development servers with one command:
+  ${chalk.cyan(`${packageManager} dev`)}
+
+This will start the web server at:
+  ${chalk.cyan(framework === "nextjs" ? "http://localhost:3000" : "http://localhost:5173")}
+
+And the LangGraph server at:
+  ${chalk.cyan("http://localhost:2024")}`;
+};
+
 async function init(): Promise<void> {
   console.log(`
   ${chalk.green("Welcome to create-agent-chat-app!")}
@@ -308,30 +323,6 @@ async function init(): Promise<void> {
     fs.writeFileSync(rootPkgJsonPath, JSON.stringify(rootPkgJson, null, 2));
   }
 
-  // Update web package.json with project name
-  const webPkgJsonPath: string = path.join(webDir, "package.json");
-  if (fs.existsSync(webPkgJsonPath)) {
-    const webPkgJson: Record<string, any> = JSON.parse(
-      fs.readFileSync(webPkgJsonPath, "utf8"),
-    );
-    webPkgJson.name = `${projectName}-web`;
-    fs.writeFileSync(webPkgJsonPath, JSON.stringify(webPkgJson, null, 2));
-  }
-
-  // Update agents package.json with project name if it exists
-  const agentsPkgJsonPath: string = path.join(
-    targetDir,
-    "agents",
-    "package.json",
-  );
-  if (fs.existsSync(agentsPkgJsonPath)) {
-    const agentsPkgJson: Record<string, any> = JSON.parse(
-      fs.readFileSync(agentsPkgJsonPath, "utf8"),
-    );
-    agentsPkgJson.name = `${projectName}-agents`;
-    fs.writeFileSync(agentsPkgJsonPath, JSON.stringify(agentsPkgJson, null, 2));
-  }
-
   if (packageManager === "yarn") {
     await createYarnRcYml(targetDir, chalk);
   }
@@ -353,13 +344,8 @@ async function init(): Promise<void> {
   
   To get started:
     ${chalk.cyan(`cd ${projectName}`)}
-    ${chalk.cyan(`${packageManager} dev`)}
   
-  This will start the web server at:
-    ${chalk.cyan(framework === "nextjs" ? "http://localhost:3000" : "http://localhost:5173")}
-  
-  And the LangGraph server at:
-    ${chalk.cyan("http://localhost:2024")}
+  ${createStartServersMessage(chalk, packageManager, framework)}
       `);
     } catch (error) {
       console.error(chalk.red("\nFailed to install dependencies:"), error);
@@ -369,9 +355,12 @@ async function init(): Promise<void> {
   To get started:
     ${chalk.cyan(`cd ${projectName}`)}
     ${chalk.cyan(`${packageManager} install`)}
-    ${chalk.cyan(`${packageManager} dev`)}
+
+  ${createStartServersMessage(chalk, packageManager, framework)}
       `);
     }
+
+    // Return early to not output the logs for when no auto install is requested.
     return;
   }
 
@@ -383,13 +372,8 @@ Your agent chat app has been created at ${chalk.green(targetDir)}
 To get started:
   ${chalk.cyan(`cd ${projectName}`)}
   ${chalk.cyan(`${packageManager} install`)}
-  ${chalk.cyan(`${packageManager} dev`)}
 
-This will start both the web, and LangGraph development servers at:
-  ${chalk.cyan(framework === "nextjs" ? "http://localhost:3000" : "http://localhost:5173")}
-
-And the LangGraph server at:
-  ${chalk.cyan("http://localhost:2024")}
+${createStartServersMessage(chalk, packageManager, framework)}
   `);
 }
 
