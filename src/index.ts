@@ -523,7 +523,6 @@ async function init(): Promise<void> {
     includeRetrievalAgent: answers.includeRetrievalAgent,
   };
 
-  await writeGitignore(targetDir, framework, chalk);
   await updateLangGraphConfig(targetDir, chalk, includesAgentSelectionsMap);
   await setAgentPackageJsonFields(targetDir, includesAgentSelectionsMap, chalk);
   await setEnvExampleFile(targetDir, includesAgentSelectionsMap, chalk);
@@ -540,6 +539,7 @@ async function init(): Promise<void> {
     framework,
   );
   fs.copySync(frameworkTemplateDir, webDir);
+  await writeGitignore(targetDir, framework, chalk);
 
   // Get the path to the agents src directory which already exists in the monorepo template
   const agentsDir: string = path.join(appsDir, "agents", "src");
