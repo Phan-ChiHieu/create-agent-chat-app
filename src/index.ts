@@ -143,6 +143,45 @@ async function writeGitignore(
   }
 }
 
+async function updateLangGraphConfig(
+  baseDir: string,
+  chalk: ChalkInstance,
+  args: {
+    includeReactAgent: boolean;
+    includeMemoryAgent: boolean;
+    includeResearchAgent: boolean;
+    includeRetrievalAgent: boolean;
+  },
+): Promise<void> {
+  try {
+    const langGraphConfigPath = path.join(baseDir, "langgraph.json");
+    const config: Record<string, any> = JSON.parse(
+      await fs.promises.readFile(langGraphConfigPath, "utf8"),
+    );
+    if (args.includeReactAgent) {
+      config.graphs["agent"] = "./apps/agents/src/react-agent/graph.ts:graph";
+    }
+    if (args.includeMemoryAgent) {
+      config.graphs["memory_agent"] =
+        "./apps/agents/src/memory-agent/graph.ts:graph";
+    }
+    if (args.includeResearchAgent) {
+      config.graphs["research_agent"] =
+        "./apps/agents/src/research-agent/graph.ts:graph";
+    }
+    if (args.includeRetrievalAgent) {
+      config.graphs["retrieval_agent"] =
+        "./apps/agents/src/retrieval-agent/graph.ts:graph";
+    }
+    await fs.promises.writeFile(
+      langGraphConfigPath,
+      JSON.stringify(config, null, 2) + "\n",
+    );
+  } catch (e) {
+    console.log(`${chalk.red("Error: ")} Failed to update LangGraph config`);
+  }
+}
+
 const createStartServersMessage = (
   chalk: ChalkInstance,
   packageManager: PackageManager,
@@ -314,6 +353,12 @@ async function init(): Promise<void> {
   fs.copySync(monorepoTemplateDir, targetDir);
 
   await writeGitignore(targetDir, framework, chalk);
+  await updateLangGraphConfig(targetDir, chalk, {
+    includeReactAgent: answers.includeReactAgent,
+    includeMemoryAgent: answers.includeMemoryAgent,
+    includeResearchAgent: answers.includeResearchAgent,
+    includeRetrievalAgent: answers.includeRetrievalAgent,
+  });
 
   // Create web directory inside apps and copy the framework template
   const appsDir: string = path.join(targetDir, "apps");
