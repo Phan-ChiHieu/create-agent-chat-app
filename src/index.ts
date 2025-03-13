@@ -167,7 +167,9 @@ async function updateLangGraphConfig(
     }
     if (args.includeResearchAgent) {
       config.graphs["research_agent"] =
-        "./apps/agents/src/research-agent/graph.ts:graph";
+        "./apps/agents/src/research-agent/retrieval-graph/graph.ts:graph";
+      config.graphs["research_index_graph"] =
+        "./apps/agents/src/research-agent/index-graph/graph.ts:graph";
     }
     if (args.includeRetrievalAgent) {
       config.graphs["retrieval_agent"] =

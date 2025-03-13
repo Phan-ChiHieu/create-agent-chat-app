@@ -11,7 +11,7 @@ import {
   AgentConfigurationAnnotation,
   ensureAgentConfiguration,
 } from "./configuration.js";
-import { graph as researcherGraph } from "./researcher_graph/graph.js";
+import { graph as researcherGraph } from "./researcher-graph/graph.js";
 import { AgentStateAnnotation, InputStateAnnotation } from "./state.js";
 import { formatDocs, loadChatModel } from "../shared/utils.js";
 
