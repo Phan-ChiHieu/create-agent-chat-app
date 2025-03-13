@@ -20,10 +20,11 @@
   },
   "files": [
     "index.js",
+    "gitignore.js",
     "templates/**"
   ],
   "scripts": {
-    "build": "tsc ./src/index.ts --esModuleInterop --target es2020 --module esnext --moduleResolution node --outDir .",
+    "build": "tsc ./src/*.ts --esModuleInterop --target es2020 --module esnext --moduleResolution node --outDir .",
     "prepublishOnly": "npm run build",
     "clean": "rm -rf src/index.js",
     "format": "prettier --write . --ignore-path .prettierignore",

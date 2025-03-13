@@ -6,12 +6,18 @@ import chalk, { ChalkInstance } from "chalk";
 import { fileURLToPath } from "url";
 import prompts from "prompts";
 import { execSync } from "child_process";
+import {
+  BASE_GITIGNORE,
+  NEXTJS_GITIGNORE,
+  VITE_GITIGNORE,
+} from "./gitignore.js";
 
 // Get the directory name of the current module
 const __filename: string = fileURLToPath(import.meta.url);
 const __dirname: string = path.dirname(__filename);
 
 type PackageManager = "npm" | "pnpm" | "yarn";
+type Framework = "nextjs" | "vite";
 
 interface ProjectAnswers {
   /**
@@ -29,7 +35,7 @@ interface ProjectAnswers {
   /**
    * @default "nextjs"
    */
-  framework: "nextjs" | "vite";
+  framework: Framework;
   /**
    * @default true
    */
@@ -107,6 +113,33 @@ async function setPackageJsonFields(
     console.log(
       `${chalk.red("Error: ")} Failed to set package manager in package.json`,
     );
+  }
+}
+
+async function writeGitignore(
+  baseDir: string,
+  framework: Framework,
+  chalk: ChalkInstance,
+): Promise<void> {
+  try {
+    const gitignorePath = path.join(baseDir, ".gitignore");
+    // Write the base .gitignore file in the root
+    await fs.promises.writeFile(gitignorePath, BASE_GITIGNORE);
+
+    // write the framework-specific .gitignore file inside baseDir/apps/web
+    const frameworkGitignorePath = path.join(
+      baseDir,
+      "apps",
+      "web",
+      ".gitignore",
+    );
+    if (framework === "nextjs") {
+      await fs.promises.writeFile(frameworkGitignorePath, NEXTJS_GITIGNORE);
+    } else {
+      await fs.promises.writeFile(frameworkGitignorePath, VITE_GITIGNORE);
+    }
+  } catch (e) {
+    console.log(`${chalk.red("Error: ")} Failed to write .gitignore`);
   }
 }
 
@@ -278,13 +311,9 @@ async function init(): Promise<void> {
     "templates",
     "monorepo",
   );
-  fs.copySync(monorepoTemplateDir, targetDir, {
-    dereference: true,
-    filter: (_) => {
-      // Ensure hidden files (like .gitignore) are copied
-      return true;
-    },
-  });
+  fs.copySync(monorepoTemplateDir, targetDir);
+
+  await writeGitignore(targetDir, framework, chalk);
 
   // Create web directory inside apps and copy the framework template
   const appsDir: string = path.join(targetDir, "apps");
@@ -297,13 +326,7 @@ async function init(): Promise<void> {
     "templates",
     framework,
   );
-  fs.copySync(frameworkTemplateDir, webDir, {
-    dereference: true,
-    filter: (_) => {
-      // Ensure hidden files (like .gitignore) are copied
-      return true;
-    },
-  });
+  fs.copySync(frameworkTemplateDir, webDir);
 
   // Get the path to the agents src directory which already exists in the monorepo template
   const agentsDir: string = path.join(appsDir, "agents", "src");
