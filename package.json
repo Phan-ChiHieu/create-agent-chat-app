@@ -1,16 +1,31 @@
 {
-  "name": "create-chat-langgraph-app-dev",
-  "version": "0.1.0",
-  "description": "CLI tool to create a LangGraph chat application with one command",
+  "name": "create-agent-chat-app",
+  "version": "0.0.6",
+  "description": "Create a LangGraph chat app with one command",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/langchain-ai/create-agent-chat-app.git"
+  },
+  "homepage": "https://github.com/langchain-ai/create-agent-chat-app/blob/main/README.md",
   "packageManager": "yarn@1.22.22",
-  "main": "src/index.ts",
+  "main": "index.js",
   "author": "Brace Sproul",
   "license": "MIT",
-  "private": true,
   "type": "module",
+  "bin": {
+    "create-agent-chat-app": "index.js"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "files": [
+    "index.js",
+    "templates/**"
+  ],
   "scripts": {
-    "build": "yarn clean && tsc",
-    "clean": "rm -rf dist",
+    "build": "tsc ./src/index.ts --esModuleInterop --target es2020 --module esnext --moduleResolution node --outDir .",
+    "prepublishOnly": "npm run build",
+    "clean": "rm -rf src/index.js",
     "format": "prettier --write . --ignore-path .prettierignore",
     "lint": "eslint 'src/**/*.{ts,tsx}'",
     "lint:fix": "eslint 'src/**/*.{ts,tsx}' --fix",
@@ -43,5 +58,15 @@
     "ts-jest": "^29.1.0",
     "tsx": "^4.19.2",
     "typescript": "^5.3.3"
-  }
+  },
+  "keywords": [
+    "langgraph",
+    "starter",
+    "template",
+    "create-app",
+    "vite",
+    "react",
+    "langchain",
+    "openai"
+  ]
 }
