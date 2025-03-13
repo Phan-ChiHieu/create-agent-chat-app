@@ -283,7 +283,7 @@ async function init(): Promise<void> {
     filter: (_) => {
       // Ensure hidden files (like .gitignore) are copied
       return true;
-    }
+    },
   });
 
   // Create web directory inside apps and copy the framework template
@@ -302,7 +302,7 @@ async function init(): Promise<void> {
     filter: (_) => {
       // Ensure hidden files (like .gitignore) are copied
       return true;
-    }
+    },
   });
 
   // Get the path to the agents src directory which already exists in the monorepo template
