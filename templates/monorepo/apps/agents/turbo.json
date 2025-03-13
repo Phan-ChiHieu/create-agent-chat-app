@@ -6,6 +6,9 @@
     },
     "build:internal": {
       "dependsOn": ["^build:internal"]
+    },
+    "dev": {
+      "dependsOn": ["^dev"]
     }
   }
 }
