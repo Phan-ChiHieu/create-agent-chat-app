@@ -131,7 +131,6 @@ async function respond(
 ): Promise<typeof AgentStateAnnotation.Update> {
   const configuration = ensureAgentConfiguration(config);
   const model = await loadChatModel(configuration.responseModel);
-  // @ts-ignore
   const context = formatDocs(state.documents);
   const prompt = configuration.responseSystemPrompt.replace(
     "{context}",

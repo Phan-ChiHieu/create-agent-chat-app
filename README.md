@@ -70,7 +70,7 @@ This will contain all of the required secrets the agent(s) need in order to run.
 Finally, start the development servers. This command will start both the web, and LangGraph servers:
 
 ```bash
-npm dev
+npm run dev
 # or
 pnpm dev
 # or
@@ -106,7 +106,7 @@ Web:
 ```bash
 cd apps/web
 
-npm dev
+npm run dev
 # or
 pnpm dev
 # or
@@ -118,7 +118,7 @@ LangGraph:
 ```bash
 cd apps/agents
 
-npm dev
+npm run dev
 # or
 pnpm dev
 # or
