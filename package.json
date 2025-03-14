@@ -1,22 +1,35 @@
 {
-  "name": "create-chat-langgraph-app-dev",
-  "version": "0.1.0",
-  "description": "CLI tool to create a LangGraph chat application with one command",
+  "name": "create-agent-chat-app",
+  "version": "0.0.6",
+  "description": "Create a LangGraph chat app with one command",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/langchain-ai/create-agent-chat-app.git"
+  },
+  "homepage": "https://github.com/langchain-ai/create-agent-chat-app/blob/main/README.md",
   "packageManager": "yarn@1.22.22",
-  "main": "src/index.ts",
+  "main": "index.js",
   "author": "Brace Sproul",
   "license": "MIT",
-  "private": true,
   "type": "module",
+  "bin": {
+    "create-agent-chat-app": "index.js"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "files": [
+    "index.js",
+    "gitignore.js",
+    "templates/**"
+  ],
   "scripts": {
-    "build": "yarn clean && tsc",
-    "clean": "rm -rf dist",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --testPathPattern=\\.test\\.ts$ --testPathIgnorePatterns=\\.int\\.test\\.ts$",
-    "test:int": "node --experimental-vm-modules node_modules/jest/bin/jest.js --testPathPattern=\\.int\\.test\\.ts$",
-    "test:single": "NODE_OPTIONS=--experimental-vm-modules yarn run jest --config jest.config.js --testTimeout 100000",
+    "build": "tsc ./src/*.ts --esModuleInterop --target es2020 --module esnext --moduleResolution node --outDir .",
+    "prepublishOnly": "npm run build",
+    "clean": "rm -rf src/index.js",
     "format": "prettier --write . --ignore-path .prettierignore",
-    "lint": "eslint 'src/**/*.{ts,tsx}' --ignore-pattern 'src/create-agent-chat-app/template/**'",
-    "lint:fix": "eslint 'src/**/*.{ts,tsx}' --fix --ignore-pattern 'src/create-agent-chat-app/template/**'",
+    "lint": "eslint 'src/**/*.{ts,tsx}'",
+    "lint:fix": "eslint 'src/**/*.{ts,tsx}' --fix",
     "format:check": "prettier --check . --ignore-path .prettierignore"
   },
   "dependencies": {
@@ -25,24 +38,37 @@
     "prompts": "^2.4.2"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.1.0",
-    "@eslint/js": "^9.9.1",
+    "@eslint/eslintrc": "^3.3.0",
+    "@eslint/js": "^9.22.0",
     "@jest/globals": "^29.7.0",
     "@tsconfig/recommended": "^1.0.7",
+    "@types/fs-extra": "^11.0.4",
     "@types/jest": "^29.5.0",
     "@types/node": "^22.10.6",
-    "@typescript-eslint/eslint-plugin": "^5.59.8",
-    "@typescript-eslint/parser": "^5.59.8",
+    "@types/prompts": "^2.4.9",
+    "@typescript-eslint/eslint-plugin": "^8.26.1",
+    "@typescript-eslint/parser": "^8.26.1",
     "dotenv": "^16.4.7",
-    "eslint": "^8.41.0",
-    "eslint-config-prettier": "^8.8.0",
-    "eslint-plugin-import": "^2.27.5",
+    "eslint": "^9.19.0",
+    "eslint-config-prettier": "^10.1.1",
+    "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-no-instanceof": "^1.0.1",
-    "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-prettier": "^5.2.3",
+    "globals": "^16.0.0",
     "jest": "^29.7.0",
     "prettier": "^3.3.3",
     "ts-jest": "^29.1.0",
     "tsx": "^4.19.2",
     "typescript": "^5.3.3"
-  }
+  },
+  "keywords": [
+    "langgraph",
+    "starter",
+    "template",
+    "create-app",
+    "vite",
+    "react",
+    "langchain",
+    "openai"
+  ]
 }
