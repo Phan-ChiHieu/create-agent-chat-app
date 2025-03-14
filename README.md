@@ -1,9 +1,8 @@
 # create-agent-chat-app
 
-A CLI tool to quickly set up an agent chat application with Vite. This code is based off of the [agent-chat-ui](https://github.com/langchain-ai/agent-chat-ui) repository.
+A CLI tool to quickly set up a LangGraph agent chat application.
 
-> 💡 Tip
-> Want to use Agent Chat, but don't want to set it up locally? Use the deployed site here: [agentchat.vercel.app](https://agentchat.vercel.app)
+This will clone a frontend chat application (Next.js or Vite), along with up to 4 pre-built agents. You can use this code to get started with a LangGraph application, or to test out the pre-built agents!
 
 ## Usage
 
