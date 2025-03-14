@@ -348,9 +348,9 @@ async function setEnvExampleFile(
       );
     }
     const requiredEnvVars = Array.from(requiredEnvVarsSet);
-    const baseEnvVars = `LANGSMITH_API_KEY=""
-LANGSMITH_TRACING_V2="true"
-LANGSMITH_PROJECT="default"`;
+    const baseEnvVars = `# LANGSMITH_API_KEY=""
+# LANGSMITH_TRACING_V2="true"
+# LANGSMITH_PROJECT="default"`;
 
     const envExampleContent = `${baseEnvVars}\n\n${requiredEnvVars
       .map((envVar) => `${envVar}=""`)
