@@ -22,27 +22,28 @@ bunx create-agent-chat-app@latest
 You'll then be prompted for the name of the project, the package manager, the web framework, and which, if any, agents to include by default:
 
 ```
-✔ What is the name of your project?
-✔ Which package manager would you like to use? › npm | pnpm | yarn
-✔ Would you like to automatically install dependencies? … y / N
-✔ Which framework would you like to use? › Next.js | Vite
-✔ Would you like to include all pre-built agents? … y / N
+◇  What is the name of your project?
+◇  Which package manager would you like to use? › npm | pnpm | yarn
+◇  Would you like to automatically install dependencies? … y / N
+◇  Which framework would you like to use? › Next.js | Vite
 ```
 
-If you select `y` for the question `Would you like to include all pre-built agents?`, it will include the following agents:
+Then, you'll be prompted to select which agents to include. By default, all are selected.
+
+The following agents are available:
 
 - [React Agent](https://github.com/langchain-ai/react-agent-js)
 - [Memory Agent](https://github.com/langchain-ai/memory-agent-js)
 - [Research Agent](https://github.com/langchain-ai/rag-research-agent-template-js)
 - [Retrieval Agent](https://github.com/langchain-ai/retrieval-agent-template-js)
 
-If you select `N`, it will prompt you one by one to select which agents to include.
-
 ```
-✔ Include ReAct agent? › y / N
-✔ Include Memory agent? › y / N
-✔ Include Research agent? › y / N
-✔ Include Retrieval agent? › y / N
+◆  Which pre-built agents would you like to include? (Press "space" to select/unselect)
+│  ◼ ReAct Agent
+│  ◼ Memory Agent
+│  ◼ Research Agent
+│  ◼ Retrieval Agent
+└
 ```
 
 After you finish the prompts, it will automatically create all the necessary files and folders in the project directory. If you selected auto-install dependencies, it will install them for you.
