@@ -175,4 +175,3 @@ const builder = new StateGraph(
 export const graph = builder
   .compile()
   .withConfig({ runName: "RetrievalGraph" });
-  

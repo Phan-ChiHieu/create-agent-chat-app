@@ -8,14 +8,18 @@ This is a starter project to help you get started with developing a RAG research
 
 This project has three graphs:
 
-* an "index" graph (`src/index_graph/graph.ts`)
-* a "retrieval" graph (`src/retrieval_graph/graph.ts`)
-* a "researcher" subgraph (part of the retrieval graph) (`src/retrieval_graph/researcher_graph/graph.ts`)
+- an "index" graph (`src/index_graph/graph.ts`)
+- a "retrieval" graph (`src/retrieval_graph/graph.ts`)
+- a "researcher" subgraph (part of the retrieval graph) (`src/retrieval_graph/researcher_graph/graph.ts`)
 
 The index graph takes in document objects indexes them.
 
 ```json
-[{ "page_content": "LangGraph is a library for building stateful, multi-actor applications with LLMs, used to create agent and multi-agent workflows." }]
+[
+  {
+    "page_content": "LangGraph is a library for building stateful, multi-actor applications with LLMs, used to create agent and multi-agent workflows."
+  }
+]
 ```
 
 If an empty list is provided (default), a list of sample documents from `src/sample_docs.json` is indexed instead. Those sample documents are based on the conceptual guides for LangChain and LangGraph.
@@ -24,12 +28,16 @@ The retrieval graph manages a chat history and responds based on the fetched doc
 
 1. Takes a user **query** as input
 2. Analyzes the query and determines how to route it:
+
 - if the query is about "LangChain", it creates a research plan based on the user's query and passes the plan to the researcher subgraph
 - if the query is ambiguous, it asks for more information
 - if the query is general (unrelated to LangChain), it lets the user know
+
 3. If the query is about "LangChain", the researcher subgraph runs for each step in the research plan, until no more steps are left:
+
 - it first generates a list of queries based on the step
 - it then retrieves the relevant documents in parallel for all queries and return the documents to the retrieval graph
+
 4. Finally, the retrieval graph generates a response based on the retrieved documents and the conversation context
 
 ## Getting Started
@@ -261,8 +269,8 @@ You can customize this retrieval agent template in several ways:
 
 5. **Modify prompts**: Update the prompts used for user query routing, research planning, query generation and more in `src/retrieval_graph/prompts.ts` to better suit your specific use case or to improve the agent's performance. You can also modify these directly in LangGraph Studio. For example, you can:
 
-  * Modify system prompt for creating research plan (`research_plan_system_prompt`)
-  * Modify system prompt for generating search queries based on the research plan (`generate_queries_system_prompt`)
+- Modify system prompt for creating research plan (`research_plan_system_prompt`)
+- Modify system prompt for generating search queries based on the research plan (`generate_queries_system_prompt`)
 
 6. **Change the language model**: Update the `response_model` in the configuration to use different language models for response generation. Options include various Claude models from Anthropic, as well as models from other providers like Fireworks AI.
 

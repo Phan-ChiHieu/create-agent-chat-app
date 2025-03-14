@@ -37,7 +37,7 @@ type Router = {
   type: "more-info" | "langchain" | "general";
 };
 
-/** 
+/**
  * Represents the state of the retrieval graph / agent.
  */
 export const AgentStateAnnotation = Annotation.Root({

@@ -1,8 +1,6 @@
 {
   "node_version": "20",
-  "dependencies": [
-    "."
-  ],
+  "dependencies": ["."],
   "graphs": {},
   "env": ".env"
 }

@@ -2,7 +2,9 @@
   "name": "agent-app",
   "author": "Your Name",
   "private": true,
-  "workspaces": ["apps/*"],
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
     "dev": "turbo dev --filter=web --filter=agents",
     "build": "turbo build",
