@@ -361,6 +361,36 @@ async function setEnvExampleFile(
   }
 }
 
+async function createPnpmWorkspacesFile(
+  baseDir: string,
+  chalk: ChalkInstance,
+): Promise<void> {
+  try {
+    // first read package.json file
+    const packageJsonPath = path.join(baseDir, "package.json");
+    const packageJson: Record<string, any> = JSON.parse(
+      await fs.promises.readFile(packageJsonPath, "utf8"),
+    );
+    // Remove the workspaces field
+    delete packageJson.workspaces;
+    // Write the updated package.json file
+    await fs.promises.writeFile(
+      packageJsonPath,
+      JSON.stringify(packageJson, null, 2),
+    );
+
+    const pnpmWorkspacesPath = path.join(baseDir, "pnpm-workspace.yaml");
+    const pnpmWorkspacesContents = `packages:
+  - 'packages/*'
+`;
+    await fs.promises.writeFile(pnpmWorkspacesPath, pnpmWorkspacesContents);
+  } catch (e) {
+    console.log(
+      `${chalk.red("Error: ")} Failed to create pnpm workspaces file`,
+    );
+  }
+}
+
 async function init(): Promise<void> {
   console.log(`
   ${chalk.green("Welcome to create-agent-chat-app!")}
@@ -573,6 +603,9 @@ async function init(): Promise<void> {
 
   if (packageManager === "yarn") {
     await createYarnRcYml(targetDir, chalk);
+  }
+  if (packageManager === "pnpm") {
+    await createPnpmWorkspacesFile(targetDir, chalk);
   }
 
   await setPackageJsonFields(packageManager, targetDir, chalk);
