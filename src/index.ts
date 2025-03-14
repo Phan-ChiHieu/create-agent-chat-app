@@ -19,7 +19,32 @@ const __dirname: string = path.dirname(__filename);
 type PackageManager = "npm" | "pnpm" | "yarn";
 type Framework = "nextjs" | "vite";
 
-interface ProjectAnswers {
+/**
+ * Whether or not specific prebuilt agents should be included
+ * in the project. Each individual agent defaults to false,
+ * unless the `includeAllAgents` is set to true, in which case,
+ * they're all set to true.
+ */
+type IncludeAgents = {
+  /**
+   * @default false
+   */
+  includeReactAgent: boolean;
+  /**
+   * @default false
+   */
+  includeMemoryAgent: boolean;
+  /**
+   * @default false
+   */
+  includeResearchAgent: boolean;
+  /**
+   * @default false
+   */
+  includeRetrievalAgent: boolean;
+};
+
+interface ProjectAnswers extends IncludeAgents {
   /**
    * @default "agent-chat-app"
    */
@@ -40,28 +65,14 @@ interface ProjectAnswers {
    * @default true
    */
   includeAllAgents: boolean;
-  /**
-   * This only runs if you set `includeAllAgents` to false.
-   * @default false
-   */
-  includeReactAgent: boolean;
-  /**
-   * This only runs if you set `includeAllAgents` to false.
-   * @default false
-   */
-  includeMemoryAgent: boolean;
-  /**
-   * This only runs if you set `includeAllAgents` to false.
-   * @default false
-   */
-  includeResearchAgent: boolean;
-  /**
-   * This only runs if you set `includeAllAgents` to false.
-   * @default false
-   */
-  includeRetrievalAgent: boolean;
 }
 
+/**
+ * Creates a .yarnrc.yml file in the base directory of the project.
+ *
+ * @param {string} baseDir - The base directory of the project
+ * @param {ChalkInstance} chalk - The chalk instance for logging
+ */
 async function createYarnRcYml(
   baseDir: string,
   chalk: ChalkInstance,
@@ -75,11 +86,19 @@ async function createYarnRcYml(
       path.join(baseDir, fileName),
       yarnRcYmlContents,
     );
-  } catch (e) {
+  } catch (_) {
     console.log(`${chalk.red("Error: ")} Failed to create ${fileName}`);
   }
 }
 
+/**
+ * Sets the `packageManager` field in package.json, and the `overrides` field
+ * to ensure the same version of @langchain/core is set across all workspaces.
+ *
+ * @param {PackageManager} packageManager - The package manager to use
+ * @param {string} baseDir - The base directory of the project
+ * @param {ChalkInstance} chalk - The chalk instance for logging
+ */
 async function setPackageJsonFields(
   packageManager: PackageManager,
   baseDir: string,
@@ -109,13 +128,21 @@ async function setPackageJsonFields(
       "@langchain/core": "^0.3.42",
     };
     await fs.promises.writeFile(pkgJsonPath, JSON.stringify(pkgJson, null, 2));
-  } catch (e) {
+  } catch (_) {
     console.log(
       `${chalk.red("Error: ")} Failed to set package manager in package.json`,
     );
   }
 }
 
+/**
+ * Writes the .gitignore file for the project. This creates one in the root of the project,
+ * along with one inside the web directory.
+ *
+ * @param {string} baseDir - The base directory of the project
+ * @param {Framework} framework - The framework to use
+ * @param {ChalkInstance} chalk - The chalk instance for logging
+ */
 async function writeGitignore(
   baseDir: string,
   framework: Framework,
@@ -138,21 +165,23 @@ async function writeGitignore(
     } else {
       await fs.promises.writeFile(frameworkGitignorePath, VITE_GITIGNORE);
     }
-  } catch (e) {
-    console.error(e);
+  } catch (_) {
     console.log(`${chalk.red("Error: ")} Failed to write .gitignore`);
   }
 }
 
+/**
+ * Updates the 'graph' field in the 'langgraph.json' configuration
+ * file with the selected prebuilt agents.
+ *
+ * @param {string} baseDir - The base directory of the project
+ * @param {ChalkInstance} chalk - The chalk instance for logging
+ * @param {IncludeAgents} args The prebuilt agents which are included in the project
+ */
 async function updateLangGraphConfig(
   baseDir: string,
   chalk: ChalkInstance,
-  args: {
-    includeReactAgent: boolean;
-    includeMemoryAgent: boolean;
-    includeResearchAgent: boolean;
-    includeRetrievalAgent: boolean;
-  },
+  args: IncludeAgents,
 ): Promise<void> {
   try {
     const langGraphConfigPath = path.join(baseDir, "langgraph.json");
@@ -180,11 +209,19 @@ async function updateLangGraphConfig(
       langGraphConfigPath,
       JSON.stringify(config, null, 2) + "\n",
     );
-  } catch (e) {
+  } catch (_) {
     console.log(`${chalk.red("Error: ")} Failed to update LangGraph config`);
   }
 }
 
+/**
+ * Creates a message to display to the user after the project has been created.
+ *
+ * @param {ChalkInstance} chalk - The chalk instance for logging
+ * @param {PackageManager} packageManager - The package manager to use
+ * @param {Framework} framework - The framework to use
+ * @returns {string} The message to display
+ */
 const createStartServersMessage = (
   chalk: ChalkInstance,
   packageManager: PackageManager,
@@ -232,14 +269,17 @@ const AGENT_DEPENDENCIES_MAP = {
   },
 };
 
+/**
+ * Updates the 'package.json' file inside the agents workspace to include
+ * all the necessary dependencies for the selected agents.
+ *
+ * @param baseDir
+ * @param {IncludeAgents} args The prebuilt agents which are included in the project
+ * @param chalk
+ */
 async function setAgentPackageJsonFields(
   baseDir: string,
-  args: {
-    includeReactAgent: boolean;
-    includeMemoryAgent: boolean;
-    includeResearchAgent: boolean;
-    includeRetrievalAgent: boolean;
-  },
+  args: IncludeAgents,
   chalk: ChalkInstance,
 ): Promise<void> {
   try {
@@ -276,7 +316,7 @@ async function setAgentPackageJsonFields(
       agentsPkgJsonPath,
       JSON.stringify(pkgJson, null, 2),
     );
-  } catch (e) {
+  } catch (_) {
     console.log(
       `${chalk.red("Error: ")} Failed to set agent package.json fields`,
     );
@@ -314,14 +354,17 @@ const AGENT_ENV_VARS_MAP = {
   ],
 };
 
+/**
+ * Creates a '.env.example' file containing all the required environment variables,
+ * depending on the selected agents.
+ *
+ * @param {string} baseDir - The base directory of the project
+ * @param {IncludeAgents} args The prebuilt agents which are included in the project
+ * @param {ChalkInstance} chalk - The chalk instance for logging
+ */
 async function setEnvExampleFile(
   baseDir: string,
-  args: {
-    includeReactAgent: boolean;
-    includeMemoryAgent: boolean;
-    includeResearchAgent: boolean;
-    includeRetrievalAgent: boolean;
-  },
+  args: IncludeAgents,
   chalk: ChalkInstance,
 ): Promise<void> {
   try {
@@ -356,11 +399,19 @@ async function setEnvExampleFile(
       .map((envVar) => `${envVar}=""`)
       .join("\n")}`;
     await fs.promises.writeFile(envExamplePath, envExampleContent);
-  } catch (e) {
+  } catch (_) {
     console.log(`${chalk.red("Error: ")} Failed to set env example file`);
   }
 }
 
+/**
+ * PNPM manages workspaces differently than NPM/Yarn, so if the user
+ * selects PNPM as their package manager, we need to create a pnpm-workspace.yaml
+ * file, and remove the workspaces field from the root package.json file.
+ *
+ * @param {string} baseDir - The base directory of the project
+ * @param {ChalkInstance} chalk - The chalk instance for logging
+ */
 async function createPnpmWorkspacesFile(
   baseDir: string,
   chalk: ChalkInstance,
@@ -384,9 +435,49 @@ async function createPnpmWorkspacesFile(
   - 'apps/*'
 `;
     await fs.promises.writeFile(pnpmWorkspacesPath, pnpmWorkspacesContents);
-  } catch (e) {
+  } catch (_) {
     console.log(
       `${chalk.red("Error: ")} Failed to create pnpm workspaces file`,
+    );
+  }
+}
+
+/**
+ * PNPM does not resolve the LangGraph Checkpoint package direct dependency
+ * the same way NPM/Yarn do. For this reason, if the user selects PNPM as their
+ * package manager, we need to explicitly install it in the 'agents' workspace.
+ *
+ * @param {string} baseDir - The base directory of the project
+ * @param {ChalkInstance} chalk - The chalk instance for logging
+ */
+async function addPnpmDirectDependencyWorkaround(
+  baseDir: string,
+  chalk: ChalkInstance,
+): Promise<void> {
+  try {
+    const agentsPkgJsonPath = path.join(
+      baseDir,
+      "apps",
+      "agents",
+      "package.json",
+    );
+    const pkgJson: Record<string, any> = JSON.parse(
+      await fs.promises.readFile(agentsPkgJsonPath, "utf8"),
+    );
+    const additionalPackages = {
+      "@langchain/langgraph-checkpoint": "^0.0.16",
+    };
+    pkgJson.dependencies = {
+      ...pkgJson.dependencies,
+      ...additionalPackages,
+    };
+    await fs.promises.writeFile(
+      agentsPkgJsonPath,
+      JSON.stringify(pkgJson, null, 2),
+    );
+  } catch (_) {
+    console.log(
+      `${chalk.red("Error: ")} Failed to update agents package.json dependencies`,
     );
   }
 }
@@ -506,7 +597,7 @@ async function init(): Promise<void> {
   // Create project directory
   const targetDir: string = path.join(process.cwd(), projectName);
 
-  if (fs.existsSync(targetDir)) {
+  if (await fs.exists(targetDir)) {
     console.error(chalk.red(`Error: Directory ${projectName} already exists.`));
     process.exit(1);
   }
@@ -515,14 +606,25 @@ async function init(): Promise<void> {
   console.log(`Project will be created at: ${chalk.green(targetDir)}\n`);
   console.log(`Framework: ${chalk.green(framework)}`);
 
+  const includesAgentSelectionsMap: IncludeAgents = {
+    includeReactAgent: answers.includeReactAgent,
+    includeMemoryAgent: answers.includeMemoryAgent,
+    includeResearchAgent: answers.includeResearchAgent,
+    includeRetrievalAgent: answers.includeRetrievalAgent,
+  };
+
   if (answers.includeAllAgents) {
     console.log(`Including: ${chalk.green("All pre-built agents")}`);
   } else {
     const selectedAgents = [];
-    if (answers.includeReactAgent) selectedAgents.push("ReAct");
-    if (answers.includeMemoryAgent) selectedAgents.push("Memory");
-    if (answers.includeResearchAgent) selectedAgents.push("Research");
-    if (answers.includeRetrievalAgent) selectedAgents.push("Retrieval");
+    if (includesAgentSelectionsMap.includeReactAgent)
+      selectedAgents.push("ReAct");
+    if (includesAgentSelectionsMap.includeMemoryAgent)
+      selectedAgents.push("Memory");
+    if (includesAgentSelectionsMap.includeResearchAgent)
+      selectedAgents.push("Research");
+    if (includesAgentSelectionsMap.includeRetrievalAgent)
+      selectedAgents.push("Retrieval");
 
     if (selectedAgents.length > 0) {
       console.log(
@@ -536,7 +638,7 @@ async function init(): Promise<void> {
   console.log(chalk.yellow("Creating project files..."));
 
   // Create the project directory
-  fs.mkdirSync(targetDir, { recursive: true });
+  await fs.mkdir(targetDir, { recursive: true });
 
   // Copy the monorepo template to the target directory
   const monorepoTemplateDir: string = path.join(
@@ -544,23 +646,18 @@ async function init(): Promise<void> {
     "templates",
     "monorepo",
   );
-  fs.copySync(monorepoTemplateDir, targetDir);
+  await fs.copy(monorepoTemplateDir, targetDir);
 
-  const includesAgentSelectionsMap = {
-    includeReactAgent: answers.includeReactAgent,
-    includeMemoryAgent: answers.includeMemoryAgent,
-    includeResearchAgent: answers.includeResearchAgent,
-    includeRetrievalAgent: answers.includeRetrievalAgent,
-  };
-
-  await updateLangGraphConfig(targetDir, chalk, includesAgentSelectionsMap);
-  await setAgentPackageJsonFields(targetDir, includesAgentSelectionsMap, chalk);
-  await setEnvExampleFile(targetDir, includesAgentSelectionsMap, chalk);
+  await Promise.all([
+    updateLangGraphConfig(targetDir, chalk, includesAgentSelectionsMap),
+    setAgentPackageJsonFields(targetDir, includesAgentSelectionsMap, chalk),
+    setEnvExampleFile(targetDir, includesAgentSelectionsMap, chalk),
+  ]);
 
   // Create web directory inside apps and copy the framework template
   const appsDir: string = path.join(targetDir, "apps");
   const webDir: string = path.join(appsDir, "web");
-  fs.mkdirSync(webDir, { recursive: true });
+  await fs.mkdir(webDir, { recursive: true });
 
   // Copy the framework template to the web directory
   const frameworkTemplateDir: string = path.join(
@@ -568,44 +665,52 @@ async function init(): Promise<void> {
     "templates",
     framework,
   );
-  fs.copySync(frameworkTemplateDir, webDir);
+  await fs.copy(frameworkTemplateDir, webDir);
   await writeGitignore(targetDir, framework, chalk);
 
   // Get the path to the agents src directory which already exists in the monorepo template
   const agentsDir: string = path.join(appsDir, "agents", "src");
 
-  // Copy agent templates if selected
+  // Copy agent templates if selected - run in parallel for better performance
+  const copyOperations = [];
+
   if (answers.includeAllAgents || answers.includeReactAgent) {
-    copyAgentTemplate("react-agent", agentsDir);
+    copyOperations.push(copyAgentTemplate("react-agent", agentsDir));
   }
 
   if (answers.includeAllAgents || answers.includeMemoryAgent) {
-    copyAgentTemplate("memory-agent", agentsDir);
+    copyOperations.push(copyAgentTemplate("memory-agent", agentsDir));
   }
 
   if (answers.includeAllAgents || answers.includeResearchAgent) {
-    copyAgentTemplate("research-agent", agentsDir);
+    copyOperations.push(copyAgentTemplate("research-agent", agentsDir));
   }
 
   if (answers.includeAllAgents || answers.includeRetrievalAgent) {
-    copyAgentTemplate("retrieval-agent", agentsDir);
+    copyOperations.push(copyAgentTemplate("retrieval-agent", agentsDir));
   }
+
+  // Execute all copy operations concurrently
+  await Promise.all(copyOperations);
 
   // Update root package.json with project name
   const rootPkgJsonPath: string = path.join(targetDir, "package.json");
-  if (fs.existsSync(rootPkgJsonPath)) {
+  if (await fs.exists(rootPkgJsonPath)) {
     const rootPkgJson: Record<string, any> = JSON.parse(
-      fs.readFileSync(rootPkgJsonPath, "utf8"),
+      await fs.readFile(rootPkgJsonPath, "utf8"),
     );
     rootPkgJson.name = projectName;
-    fs.writeFileSync(rootPkgJsonPath, JSON.stringify(rootPkgJson, null, 2));
+    await fs.writeFile(rootPkgJsonPath, JSON.stringify(rootPkgJson, null, 2));
   }
 
   if (packageManager === "yarn") {
     await createYarnRcYml(targetDir, chalk);
   }
   if (packageManager === "pnpm") {
-    await createPnpmWorkspacesFile(targetDir, chalk);
+    await Promise.all([
+      createPnpmWorkspacesFile(targetDir, chalk),
+      addPnpmDirectDependencyWorkaround(targetDir, chalk),
+    ]);
   }
 
   await setPackageJsonFields(packageManager, targetDir, chalk);
@@ -659,17 +764,20 @@ ${createStartServersMessage(chalk, packageManager, framework)}
 }
 
 // Helper function to copy agent templates
-function copyAgentTemplate(agentName: string, agentsDir: string): void {
+async function copyAgentTemplate(
+  agentName: string,
+  agentsDir: string,
+): Promise<void> {
   const agentTemplateDir: string = path.join(__dirname, "templates", agentName);
 
   // Determine the destination directory for the agent
   const agentDestDir: string = path.join(agentsDir, agentName);
 
   // Create the destination directory if it doesn't exist
-  fs.mkdirSync(agentDestDir, { recursive: true });
+  await fs.mkdir(agentDestDir, { recursive: true });
 
   // Copy the agent template files
-  fs.copySync(agentTemplateDir, agentDestDir);
+  await fs.copy(agentTemplateDir, agentDestDir);
 
   console.log(`${chalk.green("✓")} Added ${chalk.cyan(agentName)}`);
 }
