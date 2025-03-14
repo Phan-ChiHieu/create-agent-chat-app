@@ -381,7 +381,7 @@ async function createPnpmWorkspacesFile(
 
     const pnpmWorkspacesPath = path.join(baseDir, "pnpm-workspace.yaml");
     const pnpmWorkspacesContents = `packages:
-  - 'packages/*'
+  - 'apps/*'
 `;
     await fs.promises.writeFile(pnpmWorkspacesPath, pnpmWorkspacesContents);
   } catch (e) {

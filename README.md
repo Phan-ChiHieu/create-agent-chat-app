@@ -11,15 +11,13 @@ Clone code:
 
 ```bash
 # Using npx
-npx create-agent-chat-app
-
 npx create-agent-chat-app@latest
 # or
-yarn create agent-chat-app
+yarn create agent-chat-app@latest
 # or
-pnpm create agent-chat-app
+pnpm create agent-chat-app@latest
 # or
-bunx create-agent-chat-app
+bunx create-agent-chat-app@latest
 ```
 
 You'll then be prompted for the name of the project, the package manager, the web framework, and which, if any, agents to include by default:
