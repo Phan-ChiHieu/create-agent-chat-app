@@ -4,6 +4,8 @@ A CLI tool to quickly set up a LangGraph agent chat application.
 
 This will clone a frontend chat application (Next.js or Vite), along with up to 4 pre-built agents. You can use this code to get started with a LangGraph application, or to test out the pre-built agents!
 
+![CLI Usage GIF](./static/demo.gif)
+
 ## Usage
 
 Clone code:
