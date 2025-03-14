@@ -4,13 +4,21 @@ import path from "path";
 import fs from "fs-extra";
 import chalk, { ChalkInstance } from "chalk";
 import { fileURLToPath } from "url";
-import prompts from "prompts";
 import { execSync } from "child_process";
 import {
   BASE_GITIGNORE,
   NEXTJS_GITIGNORE,
   VITE_GITIGNORE,
 } from "./gitignore.js";
+import {
+  intro,
+  confirm,
+  select,
+  multiselect,
+  isCancel,
+  cancel,
+  text,
+} from "@clack/prompts";
 
 // Get the directory name of the current module
 const __filename: string = fileURLToPath(import.meta.url);
@@ -21,9 +29,7 @@ type Framework = "nextjs" | "vite";
 
 /**
  * Whether or not specific prebuilt agents should be included
- * in the project. Each individual agent defaults to false,
- * unless the `includeAllAgents` is set to true, in which case,
- * they're all set to true.
+ * in the project. Each individual agent defaults to false.
  */
 type IncludeAgents = {
   /**
@@ -61,10 +67,6 @@ interface ProjectAnswers extends IncludeAgents {
    * @default "nextjs"
    */
   framework: Framework;
-  /**
-   * @default true
-   */
-  includeAllAgents: boolean;
 }
 
 /**
@@ -482,115 +484,103 @@ async function addPnpmDirectDependencyWorkaround(
   }
 }
 
-async function init(): Promise<void> {
-  console.log(`
-  ${chalk.green("Welcome to create-agent-chat-app!")}
-  Let's set up your new agent chat application.
-  `);
+async function promptUser(): Promise<ProjectAnswers> {
+  intro(chalk.green(" create-agent-chat-app "));
 
-  // Collect user input for project name and framework
-  const initialQuestions = await prompts([
-    {
-      type: "text",
-      name: "projectName",
-      message: "What is the name of your project?",
-      initial: "agent-chat-app",
-    },
-    {
-      type: "select",
-      name: "packageManager",
-      message: "Which package manager would you like to use?",
-      choices: [
-        { title: "npm", value: "npm" },
-        { title: "pnpm", value: "pnpm" },
-        { title: "yarn", value: "yarn" },
-      ],
-      initial: 0,
-    },
-    {
-      type: "confirm",
-      name: "autoInstallDeps",
-      message: "Would you like to automatically install dependencies?",
-      initial: true,
-    },
-    {
-      type: "select",
-      name: "framework",
-      message: "Which framework would you like to use?",
-      choices: [
-        { title: "Next.js", value: "nextjs", selected: true },
-        { title: "Vite", value: "vite" },
-      ],
-      initial: 0,
-    },
-    {
-      type: "confirm",
-      name: "includeAllAgents",
-      message: "Would you like to include all pre-built agents?",
-      initial: true,
-    },
-  ]);
+  const projectNameResponse = await text({
+    message: "What is the name of your project?",
+    placeholder: "agent-chat-app",
+    defaultValue: "agent-chat-app",
+  });
 
-  // If user doesn't want all agents, ask which specific ones they want
-  let agentSelections: {
-    includeReactAgent?: boolean;
-    includeMemoryAgent?: boolean;
-    includeResearchAgent?: boolean;
-    includeRetrievalAgent?: boolean;
-  } = {
-    includeReactAgent: false,
-    includeMemoryAgent: false,
-    includeResearchAgent: false,
-    includeRetrievalAgent: false,
-  };
+  if (isCancel(projectNameResponse)) {
+    cancel("Operation cancelled");
+    process.exit(0);
+  }
+  const projectName = projectNameResponse as string;
 
-  if (!initialQuestions.includeAllAgents) {
-    agentSelections = await prompts([
-      {
-        type: "confirm",
-        name: "includeReactAgent",
-        message: "Include ReAct agent?",
-        initial: false,
-      },
-      {
-        type: "confirm",
-        name: "includeMemoryAgent",
-        message: "Include Memory agent?",
-        initial: false,
-      },
-      {
-        type: "confirm",
-        name: "includeResearchAgent",
-        message: "Include Research agent?",
-        initial: false,
-      },
-      {
-        type: "confirm",
-        name: "includeRetrievalAgent",
-        message: "Include Retrieval agent?",
-        initial: false,
-      },
-    ]);
+  const packageManagerResponse = await select({
+    message: "Which package manager would you like to use?",
+    options: [
+      { value: "npm", label: "npm" },
+      { value: "pnpm", label: "pnpm" },
+      { value: "yarn", label: "yarn" },
+    ],
+  });
+
+  if (isCancel(packageManagerResponse)) {
+    cancel("Operation cancelled");
+    process.exit(0);
+  }
+  const packageManager = packageManagerResponse as PackageManager;
+
+  const autoInstallDepsResponse = await confirm({
+    message: "Would you like to automatically install dependencies?",
+    initialValue: true,
+  });
+
+  if (isCancel(autoInstallDepsResponse)) {
+    cancel("Operation cancelled");
+    process.exit(0);
+  }
+  const autoInstallDeps = autoInstallDepsResponse as boolean;
+
+  const frameworkResponse = await select({
+    message: "Which framework would you like to use?",
+    options: [
+      { value: "nextjs", label: "Next.js" },
+      { value: "vite", label: "Vite" },
+    ],
+  });
+
+  if (isCancel(frameworkResponse)) {
+    cancel("Operation cancelled");
+    process.exit(0);
+  }
+  const framework = frameworkResponse as Framework;
+
+  const selectedAgentsResponse = await multiselect({
+    message:
+      'Which pre-built agents would you like to include? (Press "space" to select/unselect)',
+    options: [
+      { value: "react", label: "ReAct Agent" },
+      { value: "memory", label: "Memory Agent" },
+      { value: "research", label: "Research Agent" },
+      { value: "retrieval", label: "Retrieval Agent" },
+    ],
+    initialValues: ["react", "memory", "research", "retrieval"],
+    required: false,
+  });
+
+  if (isCancel(selectedAgentsResponse)) {
+    cancel("Operation cancelled");
+    process.exit(0);
   }
 
+  const selectedAgents = selectedAgentsResponse as string[];
+
+  // Determine which agents are included
+  const includeReactAgent = selectedAgents.includes("react");
+  const includeMemoryAgent = selectedAgents.includes("memory");
+  const includeResearchAgent = selectedAgents.includes("research");
+  const includeRetrievalAgent = selectedAgents.includes("retrieval");
+
   // Combine all answers
-  const answers: ProjectAnswers = {
-    packageManager: initialQuestions.packageManager,
-    autoInstallDeps: initialQuestions.autoInstallDeps,
-    projectName: initialQuestions.projectName,
-    framework: initialQuestions.framework,
-    includeAllAgents: initialQuestions.includeAllAgents,
-    includeReactAgent:
-      initialQuestions.includeAllAgents || !!agentSelections.includeReactAgent,
-    includeMemoryAgent:
-      initialQuestions.includeAllAgents || !!agentSelections.includeMemoryAgent,
-    includeResearchAgent:
-      initialQuestions.includeAllAgents ||
-      !!agentSelections.includeResearchAgent,
-    includeRetrievalAgent:
-      initialQuestions.includeAllAgents ||
-      !!agentSelections.includeRetrievalAgent,
+  return {
+    packageManager,
+    autoInstallDeps,
+    projectName,
+    framework,
+    includeReactAgent,
+    includeMemoryAgent,
+    includeResearchAgent,
+    includeRetrievalAgent,
   };
+}
+
+async function init(): Promise<void> {
+  // Get user input using our new promptUser function
+  const answers = await promptUser();
 
   const { projectName, packageManager, autoInstallDeps, framework } = answers;
 
@@ -613,7 +603,7 @@ async function init(): Promise<void> {
     includeRetrievalAgent: answers.includeRetrievalAgent,
   };
 
-  if (answers.includeAllAgents) {
+  if (Object.values(includesAgentSelectionsMap).every(Boolean)) {
     console.log(`Including: ${chalk.green("All pre-built agents")}`);
   } else {
     const selectedAgents = [];
@@ -674,19 +664,19 @@ async function init(): Promise<void> {
   // Copy agent templates if selected - run in parallel for better performance
   const copyOperations = [];
 
-  if (answers.includeAllAgents || answers.includeReactAgent) {
+  if (answers.includeReactAgent) {
     copyOperations.push(copyAgentTemplate("react-agent", agentsDir));
   }
 
-  if (answers.includeAllAgents || answers.includeMemoryAgent) {
+  if (answers.includeMemoryAgent) {
     copyOperations.push(copyAgentTemplate("memory-agent", agentsDir));
   }
 
-  if (answers.includeAllAgents || answers.includeResearchAgent) {
+  if (answers.includeResearchAgent) {
     copyOperations.push(copyAgentTemplate("research-agent", agentsDir));
   }
 
-  if (answers.includeAllAgents || answers.includeRetrievalAgent) {
+  if (answers.includeRetrievalAgent) {
     copyOperations.push(copyAgentTemplate("retrieval-agent", agentsDir));
   }
 
