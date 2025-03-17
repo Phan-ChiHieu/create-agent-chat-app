@@ -1,5 +1,3 @@
-"use client";
-
 import { parsePartialJson } from "@langchain/core/output_parsers";
 import { useStreamContext } from "@/providers/Stream";
 import { AIMessage, Checkpoint, Message } from "@langchain/langgraph-sdk";
@@ -13,7 +11,7 @@ import { MessageContentComplex } from "@langchain/core/messages";
 import { Fragment } from "react/jsx-runtime";
 import { isAgentInboxInterruptSchema } from "@/lib/agent-inbox-interrupt";
 import { ThreadView } from "../agent-inbox";
-import { useQueryState } from "nuqs";
+import { useQueryState, parseAsBoolean } from "nuqs";
 
 function CustomComponent({
   message,
@@ -76,7 +74,10 @@ export function AssistantMessage({
   handleRegenerate: (parentCheckpoint: Checkpoint | null | undefined) => void;
 }) {
   const contentString = getContentString(message.content);
-  const [hideToolCalls] = useQueryState("hideToolCalls");
+  const [hideToolCalls] = useQueryState(
+    "hideToolCalls",
+    parseAsBoolean.withDefault(false),
+  );
 
   const thread = useStreamContext();
   const isLastMessage =
@@ -100,7 +101,7 @@ export function AssistantMessage({
   const hasAnthropicToolCalls = !!anthropicStreamedToolCalls?.length;
   const isToolResult = message.type === "tool";
 
-  if (isToolResult && hideToolCalls === "1") {
+  if (isToolResult && hideToolCalls) {
     return null;
   }
 
@@ -116,7 +117,7 @@ export function AssistantMessage({
             </div>
           )}
 
-          {hideToolCalls !== "1" && (
+          {!hideToolCalls && (
             <>
               {(hasToolCalls && toolCallsHaveContents && (
                 <ToolCalls toolCalls={message.tool_calls} />
@@ -130,7 +131,7 @@ export function AssistantMessage({
 
           <CustomComponent message={message} thread={thread} />
           {isAgentInboxInterruptSchema(interrupt?.value) && isLastMessage && (
-            <ThreadView interrupt={interrupt.value[0]} />
+            <ThreadView interrupt={interrupt.value} />
           )}
           <div
             className={cn(

@@ -21,7 +21,7 @@ import {
   PanelRightClose,
   SquarePen,
 } from "lucide-react";
-import { useQueryState } from "nuqs";
+import { useQueryState, parseAsBoolean } from "nuqs";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 import ThreadHistory from "./history";
 import { toast } from "sonner";
@@ -69,9 +69,14 @@ function ScrollToBottom(props: { className?: string }) {
 
 export function Thread() {
   const [threadId, setThreadId] = useQueryState("threadId");
-  const [chatHistoryOpen, setChatHistoryOpen] =
-    useQueryState("chatHistoryOpen");
-  const [hideToolCalls, setHideToolCalls] = useQueryState("hideToolCalls");
+  const [chatHistoryOpen, setChatHistoryOpen] = useQueryState(
+    "chatHistoryOpen",
+    parseAsBoolean.withDefault(false),
+  );
+  const [hideToolCalls, setHideToolCalls] = useQueryState(
+    "hideToolCalls",
+    parseAsBoolean.withDefault(false),
+  );
   const [input, setInput] = useState("");
   const [firstTokenReceived, setFirstTokenReceived] = useState(false);
   const isLargeScreen = useMediaQuery("(min-width: 1024px)");
@@ -176,8 +181,8 @@ export function Thread() {
           style={{ width: 300 }}
           animate={
             isLargeScreen
-              ? { x: chatHistoryOpen === "1" ? 0 : -300 }
-              : { x: chatHistoryOpen === "1" ? 0 : -300 }
+              ? { x: chatHistoryOpen ? 0 : -300 }
+              : { x: chatHistoryOpen ? 0 : -300 }
           }
           initial={{ x: -300 }}
           transition={
@@ -198,13 +203,12 @@ export function Thread() {
         )}
         layout={isLargeScreen}
         animate={{
-          marginLeft: chatHistoryOpen === "1" ? (isLargeScreen ? 300 : 0) : 0,
-          width:
-            chatHistoryOpen === "1"
-              ? isLargeScreen
-                ? "calc(100% - 300px)"
-                : "100%"
-              : "100%",
+          marginLeft: chatHistoryOpen ? (isLargeScreen ? 300 : 0) : 0,
+          width: chatHistoryOpen
+            ? isLargeScreen
+              ? "calc(100% - 300px)"
+              : "100%"
+            : "100%",
         }}
         transition={
           isLargeScreen
@@ -214,15 +218,13 @@ export function Thread() {
       >
         {!chatStarted && (
           <div className="absolute top-0 left-0 w-full flex items-center justify-between gap-3 p-2 pl-4 z-10">
-            {(chatHistoryOpen !== "1" || !isLargeScreen) && (
+            {(!chatHistoryOpen || !isLargeScreen) && (
               <Button
                 className="hover:bg-gray-100"
                 variant="ghost"
-                onClick={() =>
-                  setChatHistoryOpen((p) => (p === "1" ? "0" : "1"))
-                }
+                onClick={() => setChatHistoryOpen((p) => !p)}
               >
-                {chatHistoryOpen === "1" ? (
+                {chatHistoryOpen ? (
                   <PanelRightOpen className="size-5" />
                 ) : (
                   <PanelRightClose className="size-5" />
@@ -235,15 +237,13 @@ export function Thread() {
           <div className="flex items-center justify-between gap-3 p-2 pl-4 z-10 relative">
             <div className="flex items-center justify-start gap-2 relative">
               <div className="absolute left-0 z-10">
-                {(chatHistoryOpen !== "1" || !isLargeScreen) && (
+                {(!chatHistoryOpen || !isLargeScreen) && (
                   <Button
                     className="hover:bg-gray-100"
                     variant="ghost"
-                    onClick={() =>
-                      setChatHistoryOpen((p) => (p === "1" ? "0" : "1"))
-                    }
+                    onClick={() => setChatHistoryOpen((p) => !p)}
                   >
-                    {chatHistoryOpen === "1" ? (
+                    {chatHistoryOpen ? (
                       <PanelRightOpen className="size-5" />
                     ) : (
                       <PanelRightClose className="size-5" />
@@ -255,7 +255,7 @@ export function Thread() {
                 className="flex gap-2 items-center cursor-pointer"
                 onClick={() => setThreadId(null)}
                 animate={{
-                  marginLeft: chatHistoryOpen !== "1" ? 48 : 0,
+                  marginLeft: !chatHistoryOpen ? 48 : 0,
                 }}
                 transition={{
                   type: "spring",
@@ -355,14 +355,8 @@ export function Thread() {
                         <div className="flex items-center space-x-2">
                           <Switch
                             id="render-tool-calls"
-                            checked={hideToolCalls !== "1" ? false : true}
-                            onCheckedChange={(c) => {
-                              if (c) {
-                                setHideToolCalls("1");
-                              } else {
-                                setHideToolCalls("0");
-                              }
-                            }}
+                            checked={hideToolCalls ?? false}
+                            onCheckedChange={setHideToolCalls}
                           />
                           <Label
                             htmlFor="render-tool-calls"

@@ -4,7 +4,7 @@ import { Thread } from "@langchain/langgraph-sdk";
 import { useEffect } from "react";
 
 import { getContentString } from "../utils";
-import { useQueryState } from "nuqs";
+import { useQueryState, parseAsBoolean } from "nuqs";
 import {
   Sheet,
   SheetContent,
@@ -71,8 +71,10 @@ function ThreadHistoryLoading() {
 
 export default function ThreadHistory() {
   const isLargeScreen = useMediaQuery("(min-width: 1024px)");
-  const [chatHistoryOpen, setChatHistoryOpen] =
-    useQueryState("chatHistoryOpen");
+  const [chatHistoryOpen, setChatHistoryOpen] = useQueryState(
+    "chatHistoryOpen",
+    parseAsBoolean.withDefault(false),
+  );
 
   const { getThreads, threads, setThreads, threadsLoading, setThreadsLoading } =
     useThreads();
@@ -93,9 +95,9 @@ export default function ThreadHistory() {
           <Button
             className="hover:bg-gray-100"
             variant="ghost"
-            onClick={() => setChatHistoryOpen((p) => (p === "1" ? "0" : "1"))}
+            onClick={() => setChatHistoryOpen((p) => !p)}
           >
-            {chatHistoryOpen === "1" ? (
+            {chatHistoryOpen ? (
               <PanelRightOpen className="size-5" />
             ) : (
               <PanelRightClose className="size-5" />
@@ -113,10 +115,10 @@ export default function ThreadHistory() {
       </div>
       <div className="lg:hidden">
         <Sheet
-          open={chatHistoryOpen === "1" && !isLargeScreen}
+          open={!!chatHistoryOpen && !isLargeScreen}
           onOpenChange={(open) => {
             if (isLargeScreen) return;
-            setChatHistoryOpen(open ? "1" : "0");
+            setChatHistoryOpen(open);
           }}
         >
           <SheetContent side="left" className="lg:hidden flex">
@@ -125,9 +127,7 @@ export default function ThreadHistory() {
             </SheetHeader>
             <ThreadList
               threads={threads}
-              onThreadClick={() =>
-                setChatHistoryOpen((o) => (o === "1" ? "0" : "1"))
-              }
+              onThreadClick={() => setChatHistoryOpen((o) => !o)}
             />
           </SheetContent>
         </Sheet>
