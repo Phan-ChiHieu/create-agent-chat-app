@@ -4,7 +4,7 @@ import { InboxItemInput } from "./inbox-item-input";
 import useInterruptedActions from "../hooks/use-interrupted-actions";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { StringParam, useQueryParam } from "use-query-params";
+import { useQueryState } from "nuqs";
 import { constructOpenInStudioURL } from "../utils";
 import { HumanInterrupt } from "@langchain/langgraph/prebuilt";
 
@@ -60,7 +60,7 @@ export function ThreadActionsView({
   showDescription,
   showState,
 }: ThreadActionsViewProps) {
-  const [threadId] = useQueryParam("threadId", StringParam);
+  const [threadId] = useQueryState("threadId");
   const {
     acceptAllowed,
     hasEdited,
@@ -81,7 +81,7 @@ export function ThreadActionsView({
   } = useInterruptedActions({
     interrupt,
   });
-  const [apiUrl] = useQueryParam("apiUrl", StringParam);
+  const [apiUrl] = useQueryState("apiUrl");
 
   const handleOpenInStudio = () => {
     if (!apiUrl) {
@@ -100,6 +100,7 @@ export function ThreadActionsView({
 
   const threadTitle = interrupt.action_request.action || "Unknown";
   const actionsDisabled = loading || streaming;
+  const ignoreAllowed = interrupt.config.allow_ignore;
 
   return (
     <div className="flex flex-col min-h-full w-full gap-9">
@@ -138,14 +139,16 @@ export function ThreadActionsView({
         >
           Mark as Resolved
         </Button>
-        <Button
-          variant="outline"
-          className="text-gray-800 border-gray-500 font-normal bg-white"
-          onClick={handleIgnore}
-          disabled={actionsDisabled}
-        >
-          Ignore
-        </Button>
+        {ignoreAllowed && (
+          <Button
+            variant="outline"
+            className="text-gray-800 border-gray-500 font-normal bg-white"
+            onClick={handleIgnore}
+            disabled={actionsDisabled}
+          >
+            Ignore
+          </Button>
+        )}
       </div>
 
       {/* Actions */}

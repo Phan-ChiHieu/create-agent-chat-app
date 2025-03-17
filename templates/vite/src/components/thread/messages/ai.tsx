@@ -11,7 +11,7 @@ import { MessageContentComplex } from "@langchain/core/messages";
 import { Fragment } from "react/jsx-runtime";
 import { isAgentInboxInterruptSchema } from "@/lib/agent-inbox-interrupt";
 import { ThreadView } from "../agent-inbox";
-import { BooleanParam, useQueryParam } from "use-query-params";
+import { useQueryState, parseAsBoolean } from "nuqs";
 
 function CustomComponent({
   message,
@@ -74,7 +74,10 @@ export function AssistantMessage({
   handleRegenerate: (parentCheckpoint: Checkpoint | null | undefined) => void;
 }) {
   const contentString = getContentString(message.content);
-  const [hideToolCalls] = useQueryParam("hideToolCalls", BooleanParam);
+  const [hideToolCalls] = useQueryState(
+    "hideToolCalls",
+    parseAsBoolean.withDefault(false),
+  );
 
   const thread = useStreamContext();
   const isLastMessage =
@@ -128,7 +131,7 @@ export function AssistantMessage({
 
           <CustomComponent message={message} thread={thread} />
           {isAgentInboxInterruptSchema(interrupt?.value) && isLastMessage && (
-            <ThreadView interrupt={interrupt.value[0]} />
+            <ThreadView interrupt={interrupt.value} />
           )}
           <div
             className={cn(

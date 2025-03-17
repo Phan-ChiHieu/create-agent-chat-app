@@ -5,10 +5,11 @@ import { HumanInterrupt } from "@langchain/langgraph/prebuilt";
 import { useStreamContext } from "@/providers/Stream";
 
 interface ThreadViewProps {
-  interrupt: HumanInterrupt;
+  interrupt: HumanInterrupt | HumanInterrupt[];
 }
 
 export function ThreadView({ interrupt }: ThreadViewProps) {
+  const interruptObj = Array.isArray(interrupt) ? interrupt[0] : interrupt;
   const thread = useStreamContext();
   const [showDescription, setShowDescription] = useState(false);
   const [showState, setShowState] = useState(false);
@@ -39,13 +40,13 @@ export function ThreadView({ interrupt }: ThreadViewProps) {
       {showSidePanel ? (
         <StateView
           handleShowSidePanel={handleShowSidePanel}
-          description={interrupt.description}
+          description={interruptObj.description}
           values={thread.values}
           view={showState ? "state" : "description"}
         />
       ) : (
         <ThreadActionsView
-          interrupt={interrupt}
+          interrupt={interruptObj}
           handleShowSidePanel={handleShowSidePanel}
           showState={showState}
           showDescription={showDescription}

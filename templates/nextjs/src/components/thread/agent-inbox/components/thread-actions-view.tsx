@@ -100,6 +100,7 @@ export function ThreadActionsView({
 
   const threadTitle = interrupt.action_request.action || "Unknown";
   const actionsDisabled = loading || streaming;
+  const ignoreAllowed = interrupt.config.allow_ignore;
 
   return (
     <div className="flex flex-col min-h-full w-full gap-9">
@@ -138,14 +139,16 @@ export function ThreadActionsView({
         >
           Mark as Resolved
         </Button>
-        <Button
-          variant="outline"
-          className="text-gray-800 border-gray-500 font-normal bg-white"
-          onClick={handleIgnore}
-          disabled={actionsDisabled}
-        >
-          Ignore
-        </Button>
+        {ignoreAllowed && (
+          <Button
+            variant="outline"
+            className="text-gray-800 border-gray-500 font-normal bg-white"
+            onClick={handleIgnore}
+            disabled={actionsDisabled}
+          >
+            Ignore
+          </Button>
+        )}
       </div>
 
       {/* Actions */}

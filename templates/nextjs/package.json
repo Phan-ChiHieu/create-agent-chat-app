@@ -1,8 +1,5 @@
 {
   "name": "web",
-  "readme": "https://github.com/langchain-ai/chat-langgraph/blob/main/README.md",
-  "homepage": "https://chat-langgraph.vercel.app",
-  "repository": "https://github.com/langchain-ai/chat-langgraph",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -17,9 +14,6 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "@assistant-ui/react": "^0.8.0",
-    "@assistant-ui/react-markdown": "^0.8.0",
-    "@assistant-ui/react-syntax-highlighter": "^0.8.0",
     "@langchain/core": "^0.3.42",
     "@langchain/langgraph": "^0.2.55",
     "@langchain/langgraph-api": "^0.0.16",
