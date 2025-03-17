@@ -87,14 +87,6 @@ export default function useInterruptedActions({
         {
           command: {
             resume: response,
-            update: {
-              messages: [
-                {
-                  type: "human",
-                  content: `Sending type '${response[0].type}' to interrupt...`,
-                },
-              ],
-            },
           },
         },
       );
@@ -266,14 +258,6 @@ export default function useInterruptedActions({
         {
           command: {
             goto: END,
-            update: {
-              messages: [
-                {
-                  type: "human",
-                  content: "Marking thread as resolved.",
-                },
-              ],
-            },
           },
         },
       );

@@ -1,8 +1,5 @@
 {
   "name": "web",
-  "readme": "https://github.com/langchain-ai/chat-langgraph/blob/main/README.md",
-  "homepage": "https://chat-langgraph.vercel.app",
-  "repository": "https://github.com/langchain-ai/chat-langgraph",
   "private": true,
   "version": "0.0.0",
   "type": "module",

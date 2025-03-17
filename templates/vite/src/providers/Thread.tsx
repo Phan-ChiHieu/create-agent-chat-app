@@ -1,7 +1,7 @@
 import { validate } from "uuid";
 import { getApiKey } from "@/lib/api-key";
 import { Thread } from "@langchain/langgraph-sdk";
-import { useQueryParam, StringParam } from "use-query-params";
+import { useQueryState } from "nuqs";
 import {
   createContext,
   useContext,
@@ -34,8 +34,8 @@ function getThreadSearchMetadata(
 }
 
 export function ThreadProvider({ children }: { children: ReactNode }) {
-  const [apiUrl] = useQueryParam("apiUrl", StringParam);
-  const [assistantId] = useQueryParam("assistantId", StringParam);
+  const [apiUrl] = useQueryState("apiUrl");
+  const [assistantId] = useQueryState("assistantId");
   const [threads, setThreads] = useState<Thread[]>([]);
   const [threadsLoading, setThreadsLoading] = useState(false);
 

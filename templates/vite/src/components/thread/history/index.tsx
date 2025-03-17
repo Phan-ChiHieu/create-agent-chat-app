@@ -4,7 +4,7 @@ import { Thread } from "@langchain/langgraph-sdk";
 import { useEffect } from "react";
 
 import { getContentString } from "../utils";
-import { useQueryParam, StringParam, BooleanParam } from "use-query-params";
+import { useQueryState, parseAsBoolean } from "nuqs";
 import {
   Sheet,
   SheetContent,
@@ -22,7 +22,7 @@ function ThreadList({
   threads: Thread[];
   onThreadClick?: (threadId: string) => void;
 }) {
-  const [threadId, setThreadId] = useQueryParam("threadId", StringParam);
+  const [threadId, setThreadId] = useQueryState("threadId");
 
   return (
     <div className="h-full flex flex-col w-full gap-2 items-start justify-start overflow-y-scroll [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-track]:bg-transparent">
@@ -71,9 +71,9 @@ function ThreadHistoryLoading() {
 
 export default function ThreadHistory() {
   const isLargeScreen = useMediaQuery("(min-width: 1024px)");
-  const [chatHistoryOpen, setChatHistoryOpen] = useQueryParam(
+  const [chatHistoryOpen, setChatHistoryOpen] = useQueryState(
     "chatHistoryOpen",
-    BooleanParam,
+    parseAsBoolean.withDefault(false),
   );
 
   const { getThreads, threads, setThreads, threadsLoading, setThreadsLoading } =

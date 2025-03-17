@@ -21,7 +21,7 @@ import {
   PanelRightClose,
   SquarePen,
 } from "lucide-react";
-import { BooleanParam, StringParam, useQueryParam } from "use-query-params";
+import { useQueryState, parseAsBoolean } from "nuqs";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 import ThreadHistory from "./history";
 import { toast } from "sonner";
@@ -68,14 +68,14 @@ function ScrollToBottom(props: { className?: string }) {
 }
 
 export function Thread() {
-  const [threadId, setThreadId] = useQueryParam("threadId", StringParam);
-  const [chatHistoryOpen, setChatHistoryOpen] = useQueryParam(
+  const [threadId, setThreadId] = useQueryState("threadId");
+  const [chatHistoryOpen, setChatHistoryOpen] = useQueryState(
     "chatHistoryOpen",
-    BooleanParam,
+    parseAsBoolean.withDefault(false),
   );
-  const [hideToolCalls, setHideToolCalls] = useQueryParam(
+  const [hideToolCalls, setHideToolCalls] = useQueryState(
     "hideToolCalls",
-    BooleanParam,
+    parseAsBoolean.withDefault(false),
   );
   const [input, setInput] = useState("");
   const [firstTokenReceived, setFirstTokenReceived] = useState(false);
