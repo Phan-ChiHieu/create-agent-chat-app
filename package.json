@@ -30,7 +30,12 @@
     "format": "prettier --write . --ignore-path .prettierignore",
     "lint": "eslint 'src/**/*.{ts,tsx}'",
     "lint:fix": "eslint 'src/**/*.{ts,tsx}' --fix",
-    "format:check": "prettier --check . --ignore-path .prettierignore"
+    "format:check": "prettier --check . --ignore-path .prettierignore",
+    "e2e": "./scripts/run-all-e2e-local.sh",
+    "e2e:npm": "./scripts/run-e2e-local.sh npm cleanup",
+    "e2e:yarn": "./scripts/run-e2e-local.sh yarn cleanup",
+    "e2e:pnpm": "./scripts/run-e2e-local.sh pnpm cleanup",
+    "e2e:cleanup": "./scripts/cleanup-tests.sh"
   },
   "dependencies": {
     "@clack/prompts": "^0.10.0",
