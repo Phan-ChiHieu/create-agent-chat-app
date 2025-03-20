@@ -35,10 +35,9 @@ jobs:
 
       - name: Setup pnpm
         if: matrix.package-manager == 'pnpm'
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.5.1
-          standalone: true
+        run: |
+          npm install -g pnpm@10.5.1
+          pnpm --version
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
