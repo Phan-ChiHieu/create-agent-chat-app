@@ -24,13 +24,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Use Node.js 18.x
         uses: actions/setup-node@v3
         with:
           node-version: 18.x
           cache: "yarn"
+
       - name: Install dependencies
         run: yarn install --immutable --mode=skip-build
+
       - name: Check formatting
         run: yarn format:check
 
@@ -39,13 +45,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Use Node.js 18.x
         uses: actions/setup-node@v3
         with:
           node-version: 18.x
           cache: "yarn"
+
       - name: Install dependencies
         run: yarn install --immutable --mode=skip-build
+
       - name: Check linting
         run: yarn run lint
 
