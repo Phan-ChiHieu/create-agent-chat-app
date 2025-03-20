@@ -8,7 +8,48 @@ This will clone a frontend chat application (Next.js or Vite), along with up to 
 
 ## Usage
 
-Clone code:
+### Quickstart
+
+The quickest way to get started is to pass flags to the CLI, instead of going through the prompts:
+
+```bash
+# Pass `-Y`/`--yes` to accept all default values
+npx create-agent-chat-app@latest -Y
+```
+
+You can also pass individual flags. Here are all of the options the CLI accepts, and their default values:
+
+```bash
+npx create-agent-chat-app@latest --help
+```
+
+```
+Usage: create-agent-chat-app [options]
+
+Create an agent chat app with one command
+
+Options:
+  -V, --version                output the version number
+  -Y, --yes                    Skip all prompts and use default values
+  --project-name <name>        Name of the project (default: "agent-chat-app")
+  --package-manager <manager>  Package manager to use (npm, pnpm, yarn) (default: "yarn")
+  --install-deps <boolean>     Automatically install dependencies (default: "true")
+  --framework <framework>      Framework to use (nextjs, vite) (default: "nextjs")
+  --include-agent <agent...>   Pre-built agents to include (react, memory, research, retrieval)
+  -h, --help                   display help for command
+```
+
+If you want to pass some flags, and use the defaults for the rest, simply add `-Y`/`--yes`, in addition to the flags you want to pass:
+
+```bash
+npx create-agent-chat-app@latest -Y --package-manager pnpm
+```
+
+This will accept all default values, except for the package manager, which will be set to `pnpm`.
+
+### Interactive
+
+If you prefer to go through the prompts, you can run the following:
 
 ```bash
 # Using npx

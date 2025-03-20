@@ -5,6 +5,7 @@ import fs from "fs-extra";
 import chalk, { ChalkInstance } from "chalk";
 import { fileURLToPath } from "url";
 import { execSync } from "child_process";
+import { Command } from "commander";
 import {
   BASE_GITIGNORE,
   NEXTJS_GITIGNORE,
@@ -23,6 +24,8 @@ import {
 // Get the directory name of the current module
 const __filename: string = fileURLToPath(import.meta.url);
 const __dirname: string = path.dirname(__filename);
+
+const VERSION = "0.1.3";
 
 type PackageManager = "npm" | "pnpm" | "yarn";
 type Framework = "nextjs" | "vite";
@@ -129,6 +132,9 @@ async function setPackageJsonFields(
     pkgJson[overridesPkgManagerMap[packageManager]] = {
       "@langchain/core": "^0.3.42",
     };
+    if (packageManager === "npm") {
+      delete pkgJson["resolutions"];
+    }
     await fs.promises.writeFile(pkgJsonPath, JSON.stringify(pkgJson, null, 2));
   } catch (_) {
     console.log(
@@ -275,15 +281,21 @@ const AGENT_DEPENDENCIES_MAP = {
  * Updates the 'package.json' file inside the agents workspace to include
  * all the necessary dependencies for the selected agents.
  *
- * @param baseDir
- * @param {IncludeAgents} args The prebuilt agents which are included in the project
- * @param chalk
+ * @param baseDir - The base directory of the project
+ * @param inputs - Object containing the following properties:
+ * @param inputs.agentArgs - The prebuilt agents which are included in the project
+ * @param inputs.packageManager - The package manager being used (npm, yarn, etc.)
+ * @param inputs.chalk - Chalk instance for terminal styling
  */
 async function setAgentPackageJsonFields(
   baseDir: string,
-  args: IncludeAgents,
-  chalk: ChalkInstance,
+  inputs: {
+    agentArgs: IncludeAgents;
+    packageManager: PackageManager;
+    chalk: ChalkInstance;
+  },
 ): Promise<void> {
+  const { agentArgs, packageManager, chalk } = inputs;
   try {
     const agentsPkgJsonPath = path.join(
       baseDir,
@@ -295,16 +307,16 @@ async function setAgentPackageJsonFields(
       await fs.promises.readFile(agentsPkgJsonPath, "utf8"),
     );
     const requiredPackages: Record<string, string> = {};
-    if (args.includeReactAgent) {
+    if (agentArgs.includeReactAgent) {
       Object.assign(requiredPackages, AGENT_DEPENDENCIES_MAP["react-agent"]);
     }
-    if (args.includeMemoryAgent) {
+    if (agentArgs.includeMemoryAgent) {
       Object.assign(requiredPackages, AGENT_DEPENDENCIES_MAP["memory-agent"]);
     }
-    if (args.includeResearchAgent) {
+    if (agentArgs.includeResearchAgent) {
       Object.assign(requiredPackages, AGENT_DEPENDENCIES_MAP["research-agent"]);
     }
-    if (args.includeRetrievalAgent) {
+    if (agentArgs.includeRetrievalAgent) {
       Object.assign(
         requiredPackages,
         AGENT_DEPENDENCIES_MAP["retrieval-agent"],
@@ -314,6 +326,11 @@ async function setAgentPackageJsonFields(
       ...pkgJson.dependencies,
       ...requiredPackages,
     };
+
+    // Update the scripts to call the correct package manager
+    pkgJson.scripts["build:internal"] = pkgJson.scripts[
+      "build:internal"
+    ].replace("{PACKAGE_MANAGER}", packageManager);
     await fs.promises.writeFile(
       agentsPkgJsonPath,
       JSON.stringify(pkgJson, null, 2),
@@ -484,86 +501,211 @@ async function addPnpmDirectDependencyWorkaround(
   }
 }
 
-async function promptUser(): Promise<ProjectAnswers> {
+/**
+ * Parse command-line arguments and return project configuration.
+ * If all required arguments are provided, this will bypass the interactive prompts.
+ * If only some arguments are provided, the user will be prompted for the remaining ones.
+ */
+async function parseCommandLineArgs(): Promise<Partial<ProjectAnswers>> {
+  const program = new Command();
+
+  program
+    .name("create-agent-chat-app")
+    .description("Create an agent chat app with one command")
+    .version(VERSION)
+    .option("-Y, --yes", "Skip all prompts and use default values")
+    .option("--project-name <name>", "Name of the project", "agent-chat-app")
+    .option(
+      "--package-manager <manager>",
+      "Package manager to use (npm, pnpm, yarn)",
+      "yarn",
+    )
+    .option(
+      "--install-deps <boolean>",
+      "Automatically install dependencies",
+      "true",
+    )
+    .option(
+      "--framework <framework>",
+      "Framework to use (nextjs, vite)",
+      "nextjs",
+    )
+    .option(
+      "--include-agent <agent...>",
+      "Pre-built agents to include (react, memory, research, retrieval)",
+    )
+    .allowUnknownOption();
+
+  program.parse();
+  const options = program.opts();
+
+  const result: Partial<ProjectAnswers> = {};
+
+  // If -Y or --yes flag is provided, use all defaults
+  if (options.yes) {
+    return {
+      projectName: options.projectName ?? "agent-chat-app",
+      packageManager: options.packageManager ?? "yarn",
+      autoInstallDeps: options.autoInstallDeps ?? true,
+      framework: options.framework ?? "nextjs",
+      includeReactAgent: options.includeAgent?.includes("react") ?? true,
+      includeMemoryAgent: options.includeAgent?.includes("memory") ?? true,
+      includeResearchAgent: options.includeAgent?.includes("research") ?? true,
+      includeRetrievalAgent:
+        options.includeAgent?.includes("retrieval") ?? true,
+    } as ProjectAnswers;
+  }
+
+  if (options.projectName) {
+    result.projectName = options.projectName;
+  }
+
+  if (
+    options.packageManager &&
+    ["npm", "pnpm", "yarn"].includes(options.packageManager)
+  ) {
+    result.packageManager = options.packageManager as PackageManager;
+  }
+
+  if (options.installDeps !== undefined) {
+    result.autoInstallDeps = options.installDeps.toLowerCase() === "true";
+  }
+
+  if (options.framework && ["nextjs", "vite"].includes(options.framework)) {
+    result.framework = options.framework as Framework;
+  }
+
+  if (options.includeAgent) {
+    const selectedAgents = Array.isArray(options.includeAgent)
+      ? options.includeAgent
+      : [options.includeAgent];
+
+    result.includeReactAgent = selectedAgents.includes("react");
+    result.includeMemoryAgent = selectedAgents.includes("memory");
+    result.includeResearchAgent = selectedAgents.includes("research");
+    result.includeRetrievalAgent = selectedAgents.includes("retrieval");
+  }
+
+  return result;
+}
+
+/**
+ * Prompt the user for any missing configuration options.
+ * If a value is already provided in partialAnswers, the user won't be prompted for it.
+ */
+async function promptUser(
+  partialAnswers: Partial<ProjectAnswers> = {},
+): Promise<ProjectAnswers> {
   intro(chalk.green(" create-agent-chat-app "));
 
-  const projectNameResponse = await text({
-    message: "What is the name of your project?",
-    placeholder: "agent-chat-app",
-    defaultValue: "agent-chat-app",
-  });
+  // Project name prompt
+  let projectName = partialAnswers.projectName;
+  if (!projectName) {
+    const projectNameResponse = await text({
+      message: "What is the name of your project?",
+      placeholder: "agent-chat-app",
+      defaultValue: "agent-chat-app",
+    });
 
-  if (isCancel(projectNameResponse)) {
-    cancel("Operation cancelled");
-    process.exit(0);
-  }
-  const projectName = projectNameResponse as string;
-
-  const packageManagerResponse = await select({
-    message: "Which package manager would you like to use?",
-    options: [
-      { value: "npm", label: "npm" },
-      { value: "pnpm", label: "pnpm" },
-      { value: "yarn", label: "yarn" },
-    ],
-  });
-
-  if (isCancel(packageManagerResponse)) {
-    cancel("Operation cancelled");
-    process.exit(0);
-  }
-  const packageManager = packageManagerResponse as PackageManager;
-
-  const autoInstallDepsResponse = await confirm({
-    message: "Would you like to automatically install dependencies?",
-    initialValue: true,
-  });
-
-  if (isCancel(autoInstallDepsResponse)) {
-    cancel("Operation cancelled");
-    process.exit(0);
-  }
-  const autoInstallDeps = autoInstallDepsResponse as boolean;
-
-  const frameworkResponse = await select({
-    message: "Which framework would you like to use?",
-    options: [
-      { value: "nextjs", label: "Next.js" },
-      { value: "vite", label: "Vite" },
-    ],
-  });
-
-  if (isCancel(frameworkResponse)) {
-    cancel("Operation cancelled");
-    process.exit(0);
-  }
-  const framework = frameworkResponse as Framework;
-
-  const selectedAgentsResponse = await multiselect({
-    message:
-      'Which pre-built agents would you like to include? (Press "space" to select/unselect)',
-    options: [
-      { value: "react", label: "ReAct Agent" },
-      { value: "memory", label: "Memory Agent" },
-      { value: "research", label: "Research Agent" },
-      { value: "retrieval", label: "Retrieval Agent" },
-    ],
-    initialValues: ["react", "memory", "research", "retrieval"],
-    required: false,
-  });
-
-  if (isCancel(selectedAgentsResponse)) {
-    cancel("Operation cancelled");
-    process.exit(0);
+    if (isCancel(projectNameResponse)) {
+      cancel("Operation cancelled");
+      process.exit(0);
+    }
+    projectName = projectNameResponse as string;
   }
 
-  const selectedAgents = selectedAgentsResponse as string[];
+  // Package manager prompt
+  let packageManager = partialAnswers.packageManager;
+  if (!packageManager) {
+    const packageManagerResponse = await select({
+      message: "Which package manager would you like to use?",
+      options: [
+        { value: "npm", label: "npm" },
+        { value: "pnpm", label: "pnpm" },
+        { value: "yarn", label: "yarn" },
+      ],
+    });
 
-  // Determine which agents are included
-  const includeReactAgent = selectedAgents.includes("react");
-  const includeMemoryAgent = selectedAgents.includes("memory");
-  const includeResearchAgent = selectedAgents.includes("research");
-  const includeRetrievalAgent = selectedAgents.includes("retrieval");
+    if (isCancel(packageManagerResponse)) {
+      cancel("Operation cancelled");
+      process.exit(0);
+    }
+    packageManager = packageManagerResponse as PackageManager;
+  }
+
+  // Auto install dependencies prompt
+  let autoInstallDeps = partialAnswers.autoInstallDeps;
+  if (autoInstallDeps === undefined) {
+    const autoInstallDepsResponse = await confirm({
+      message: "Would you like to automatically install dependencies?",
+      initialValue: true,
+    });
+
+    if (isCancel(autoInstallDepsResponse)) {
+      cancel("Operation cancelled");
+      process.exit(0);
+    }
+    autoInstallDeps = autoInstallDepsResponse as boolean;
+  }
+
+  // Framework prompt
+  let framework = partialAnswers.framework;
+  if (!framework) {
+    const frameworkResponse = await select({
+      message: "Which framework would you like to use?",
+      options: [
+        { value: "nextjs", label: "Next.js" },
+        { value: "vite", label: "Vite" },
+      ],
+    });
+
+    if (isCancel(frameworkResponse)) {
+      cancel("Operation cancelled");
+      process.exit(0);
+    }
+    framework = frameworkResponse as Framework;
+  }
+
+  // Check if all agent selections are already provided
+  const allAgentSelectionsProvided =
+    partialAnswers.includeReactAgent !== undefined &&
+    partialAnswers.includeMemoryAgent !== undefined &&
+    partialAnswers.includeResearchAgent !== undefined &&
+    partialAnswers.includeRetrievalAgent !== undefined;
+
+  // Agent selection prompt if not all provided
+  let includeReactAgent = partialAnswers.includeReactAgent ?? false;
+  let includeMemoryAgent = partialAnswers.includeMemoryAgent ?? false;
+  let includeResearchAgent = partialAnswers.includeResearchAgent ?? false;
+  let includeRetrievalAgent = partialAnswers.includeRetrievalAgent ?? false;
+
+  if (!allAgentSelectionsProvided) {
+    const selectedAgentsResponse = await multiselect({
+      message:
+        'Which pre-built agents would you like to include? (Press "space" to select/unselect)',
+      options: [
+        { value: "react", label: "ReAct Agent" },
+        { value: "memory", label: "Memory Agent" },
+        { value: "research", label: "Research Agent" },
+        { value: "retrieval", label: "Retrieval Agent" },
+      ],
+      initialValues: ["react", "memory", "research", "retrieval"],
+      required: false,
+    });
+
+    if (isCancel(selectedAgentsResponse)) {
+      cancel("Operation cancelled");
+      process.exit(0);
+    }
+
+    const selectedAgents = selectedAgentsResponse as string[];
+
+    // Determine which agents are included
+    includeReactAgent = selectedAgents.includes("react");
+    includeMemoryAgent = selectedAgents.includes("memory");
+    includeResearchAgent = selectedAgents.includes("research");
+    includeRetrievalAgent = selectedAgents.includes("retrieval");
+  }
 
   // Combine all answers
   return {
@@ -579,8 +721,24 @@ async function promptUser(): Promise<ProjectAnswers> {
 }
 
 async function init(): Promise<void> {
-  // Get user input using our new promptUser function
-  const answers = await promptUser();
+  // Parse command-line arguments first
+  const cliOptions = await parseCommandLineArgs();
+
+  const allRequiredOptionsProvided =
+    cliOptions.autoInstallDeps !== undefined &&
+    cliOptions.projectName !== undefined &&
+    cliOptions.packageManager !== undefined &&
+    cliOptions.framework !== undefined &&
+    cliOptions.includeReactAgent !== undefined &&
+    cliOptions.includeMemoryAgent !== undefined &&
+    cliOptions.includeResearchAgent !== undefined &&
+    cliOptions.includeRetrievalAgent !== undefined;
+
+  // If all options are provided via CLI, use them directly
+  // Otherwise, prompt for the missing options
+  const answers = allRequiredOptionsProvided
+    ? (cliOptions as ProjectAnswers)
+    : await promptUser(cliOptions);
 
   const { projectName, packageManager, autoInstallDeps, framework } = answers;
 
@@ -640,7 +798,11 @@ async function init(): Promise<void> {
 
   await Promise.all([
     updateLangGraphConfig(targetDir, chalk, includesAgentSelectionsMap),
-    setAgentPackageJsonFields(targetDir, includesAgentSelectionsMap, chalk),
+    setAgentPackageJsonFields(targetDir, {
+      agentArgs: includesAgentSelectionsMap,
+      packageManager,
+      chalk,
+    }),
     setEnvExampleFile(targetDir, includesAgentSelectionsMap, chalk),
   ]);
 
