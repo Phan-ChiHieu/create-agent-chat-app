@@ -281,9 +281,11 @@ const AGENT_DEPENDENCIES_MAP = {
  * Updates the 'package.json' file inside the agents workspace to include
  * all the necessary dependencies for the selected agents.
  *
- * @param baseDir
- * @param {IncludeAgents} args The prebuilt agents which are included in the project
- * @param chalk
+ * @param baseDir - The base directory of the project
+ * @param inputs - Object containing the following properties:
+ * @param inputs.agentArgs - The prebuilt agents which are included in the project
+ * @param inputs.packageManager - The package manager being used (npm, yarn, etc.)
+ * @param inputs.chalk - Chalk instance for terminal styling
  */
 async function setAgentPackageJsonFields(
   baseDir: string,
