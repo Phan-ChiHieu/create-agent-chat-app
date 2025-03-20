@@ -7,14 +7,12 @@
     "url": "git+https://github.com/langchain-ai/create-agent-chat-app.git"
   },
   "homepage": "https://github.com/langchain-ai/create-agent-chat-app/blob/main/README.md",
-  "packageManager": "yarn@1.22.22",
+  "packageManager": "yarn@3.5.1",
   "main": "index.js",
   "author": "Brace Sproul",
   "license": "MIT",
   "type": "module",
-  "bin": {
-    "create-agent-chat-app": "index.js"
-  },
+  "bin": "index.js",
   "engines": {
     "node": ">=16.0.0"
   },
