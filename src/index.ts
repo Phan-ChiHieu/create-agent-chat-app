@@ -513,7 +513,7 @@ async function parseCommandLineArgs(): Promise<Partial<ProjectAnswers>> {
     .name("create-agent-chat-app")
     .description("Create an agent chat app with one command")
     .version(VERSION)
-    .option("-y, --yes", "Skip all prompts and use default values")
+    .option("-Y, --yes", "Skip all prompts and use default values")
     .option("--project-name <name>", "Name of the project", "agent-chat-app")
     .option(
       "--package-manager <manager>",
@@ -541,7 +541,7 @@ async function parseCommandLineArgs(): Promise<Partial<ProjectAnswers>> {
 
   const result: Partial<ProjectAnswers> = {};
 
-  // If -y or --yes flag is provided, use all defaults
+  // If -Y or --yes flag is provided, use all defaults
   if (options.yes) {
     return {
       projectName: options.projectName ?? "agent-chat-app",
