@@ -83,6 +83,8 @@ async function createYarnRcYml(
   chalk: ChalkInstance,
 ): Promise<void> {
   const yarnRcYmlContents = `nodeLinker: node-modules
+
+enableImmutableInstalls: false
 `;
   const fileName = `.yarnrc.yml`;
 
