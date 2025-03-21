@@ -1,6 +1,6 @@
 {
   "name": "create-agent-chat-app",
-  "version": "0.1.4-rc.1",
+  "version": "0.1.4",
   "description": "Create a LangGraph chat app with one command",
   "repository": {
     "type": "git",
