@@ -25,7 +25,7 @@ import {
 const __filename: string = fileURLToPath(import.meta.url);
 const __dirname: string = path.dirname(__filename);
 
-const VERSION = "0.1.3";
+const VERSION = "0.1.4";
 
 type PackageManager = "npm" | "pnpm" | "yarn";
 type Framework = "nextjs" | "vite";
