@@ -516,25 +516,25 @@ async function parseCommandLineArgs(): Promise<Partial<ProjectAnswers>> {
     .description("Create an agent chat app with one command")
     .version(VERSION)
     .option("-Y, --yes", "Skip all prompts and use default values")
-    .option("--project-name <name>", "Name of the project", "agent-chat-app")
+    .option(
+      "--project-name <name>",
+      "Name of the project (default: agent-chat-app)",
+    )
     .option(
       "--package-manager <manager>",
-      "Package manager to use (npm, pnpm, yarn)",
-      "yarn",
+      "Package manager to use (npm, pnpm, yarn) (default: yarn)",
     )
     .option(
       "--install-deps <boolean>",
-      "Automatically install dependencies",
-      "true",
+      "Automatically install dependencies (default: true)",
     )
     .option(
       "--framework <framework>",
-      "Framework to use (nextjs, vite)",
-      "nextjs",
+      "Framework to use (nextjs, vite) (default: nextjs)",
     )
     .option(
       "--include-agent <agent...>",
-      "Pre-built agents to include (react, memory, research, retrieval)",
+      "Pre-built agents to include (react, memory, research, retrieval) (default: all)",
     )
     .allowUnknownOption();
 
@@ -543,41 +543,28 @@ async function parseCommandLineArgs(): Promise<Partial<ProjectAnswers>> {
 
   const result: Partial<ProjectAnswers> = {};
 
-  // If -Y or --yes flag is provided, use all defaults
-  if (options.yes) {
-    return {
-      projectName: options.projectName ?? "agent-chat-app",
-      packageManager: options.packageManager ?? "yarn",
-      autoInstallDeps: options.autoInstallDeps ?? true,
-      framework: options.framework ?? "nextjs",
-      includeReactAgent: options.includeAgent?.includes("react") ?? true,
-      includeMemoryAgent: options.includeAgent?.includes("memory") ?? true,
-      includeResearchAgent: options.includeAgent?.includes("research") ?? true,
-      includeRetrievalAgent:
-        options.includeAgent?.includes("retrieval") ?? true,
-    } as ProjectAnswers;
-  }
-
-  if (options.projectName) {
+  // Only include options that were explicitly provided by the user
+  if ("projectName" in options) {
     result.projectName = options.projectName;
   }
 
-  if (
-    options.packageManager &&
-    ["npm", "pnpm", "yarn"].includes(options.packageManager)
-  ) {
-    result.packageManager = options.packageManager as PackageManager;
+  if ("packageManager" in options) {
+    if (["npm", "pnpm", "yarn"].includes(options.packageManager)) {
+      result.packageManager = options.packageManager as PackageManager;
+    }
   }
 
-  if (options.installDeps !== undefined) {
+  if ("installDeps" in options) {
     result.autoInstallDeps = options.installDeps.toLowerCase() === "true";
   }
 
-  if (options.framework && ["nextjs", "vite"].includes(options.framework)) {
-    result.framework = options.framework as Framework;
+  if ("framework" in options) {
+    if (["nextjs", "vite"].includes(options.framework)) {
+      result.framework = options.framework as Framework;
+    }
   }
 
-  if (options.includeAgent) {
+  if ("includeAgent" in options) {
     const selectedAgents = Array.isArray(options.includeAgent)
       ? options.includeAgent
       : [options.includeAgent];
@@ -586,6 +573,20 @@ async function parseCommandLineArgs(): Promise<Partial<ProjectAnswers>> {
     result.includeMemoryAgent = selectedAgents.includes("memory");
     result.includeResearchAgent = selectedAgents.includes("research");
     result.includeRetrievalAgent = selectedAgents.includes("retrieval");
+  }
+
+  // If -Y or --yes flag is provided, use all defaults
+  if (options.yes) {
+    return {
+      projectName: result.projectName ?? "agent-chat-app",
+      packageManager: result.packageManager ?? "yarn",
+      autoInstallDeps: result.autoInstallDeps ?? true,
+      framework: result.framework ?? "nextjs",
+      includeReactAgent: result.includeReactAgent ?? true,
+      includeMemoryAgent: result.includeMemoryAgent ?? true,
+      includeResearchAgent: result.includeResearchAgent ?? true,
+      includeRetrievalAgent: result.includeRetrievalAgent ?? true,
+    } as ProjectAnswers;
   }
 
   return result;
