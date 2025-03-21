@@ -1,0 +1,58 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch: # Allows triggering the workflow manually in GitHub UI
+
+# If another push to the same PR or branch happens while this workflow is still running,
+# cancel the earlier run in favor of the next run.
+#
+# There's no point in testing an outdated version of the code. GitHub only allows
+# a limited number of job runners to be active at the same time, so it's better to cancel
+# pointless jobs early so that more useful jobs can run sooner.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-create-command:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x, 22.x]
+        package-manager: [npm, yarn, pnpm]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "yarn"
+
+      - name: Setup pnpm
+        if: matrix.package-manager == 'pnpm'
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10.5.1
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build package
+        run: yarn build
+
+      - name: Create test directory
+        run: mkdir -p /tmp/test-${{ matrix.package-manager }}
+
+      - name: Run create-agent-chat-app command
+        run: ./scripts/test-create-command.sh ${{ matrix.package-manager }}
+
+      - name: Test build in created project
+        run: ./scripts/test-build.sh ${{ matrix.package-manager }}
