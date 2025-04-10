@@ -28,6 +28,13 @@ import { toast } from "sonner";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { Label } from "../ui/label";
 import { Switch } from "../ui/switch";
+import { GitHubSVG } from "../icons/github";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
 
 function StickyToBottomContent(props: {
   content: ReactNode;
@@ -64,6 +71,27 @@ function ScrollToBottom(props: { className?: string }) {
       <ArrowDown className="w-4 h-4" />
       <span>Scroll to bottom</span>
     </Button>
+  );
+}
+
+function OpenGitHubRepo() {
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <a
+            href="https://github.com/langchain-ai/agent-chat-ui"
+            target="_blank"
+            className="flex items-center justify-center"
+          >
+            <GitHubSVG width="24" height="24" />
+          </a>
+        </TooltipTrigger>
+        <TooltipContent side="left">
+          <p>Open GitHub repo</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
@@ -172,6 +200,9 @@ export function Thread() {
   };
 
   const chatStarted = !!threadId || !!messages.length;
+  const hasNoAIOrToolMessages = !messages.find(
+    (m) => m.type === "ai" || m.type === "tool",
+  );
 
   return (
     <div className="flex w-full h-screen overflow-hidden">
@@ -218,23 +249,28 @@ export function Thread() {
       >
         {!chatStarted && (
           <div className="absolute top-0 left-0 w-full flex items-center justify-between gap-3 p-2 pl-4 z-10">
-            {(!chatHistoryOpen || !isLargeScreen) && (
-              <Button
-                className="hover:bg-gray-100"
-                variant="ghost"
-                onClick={() => setChatHistoryOpen((p) => !p)}
-              >
-                {chatHistoryOpen ? (
-                  <PanelRightOpen className="size-5" />
-                ) : (
-                  <PanelRightClose className="size-5" />
-                )}
-              </Button>
-            )}
+            <div>
+              {(!chatHistoryOpen || !isLargeScreen) && (
+                <Button
+                  className="hover:bg-gray-100"
+                  variant="ghost"
+                  onClick={() => setChatHistoryOpen((p) => !p)}
+                >
+                  {chatHistoryOpen ? (
+                    <PanelRightOpen className="size-5" />
+                  ) : (
+                    <PanelRightClose className="size-5" />
+                  )}
+                </Button>
+              )}
+            </div>
+            <div className="absolute top-2 right-4 flex items-center">
+              <OpenGitHubRepo />
+            </div>
           </div>
         )}
         {chatStarted && (
-          <div className="flex items-center justify-between gap-3 p-2 pl-4 z-10 relative">
+          <div className="flex items-center justify-between gap-3 p-2 z-10 relative">
             <div className="flex items-center justify-start gap-2 relative">
               <div className="absolute left-0 z-10">
                 {(!chatHistoryOpen || !isLargeScreen) && (
@@ -270,15 +306,20 @@ export function Thread() {
               </motion.button>
             </div>
 
-            <TooltipIconButton
-              size="lg"
-              className="p-4"
-              tooltip="New thread"
-              variant="ghost"
-              onClick={() => setThreadId(null)}
-            >
-              <SquarePen className="size-5" />
-            </TooltipIconButton>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center">
+                <OpenGitHubRepo />
+              </div>
+              <TooltipIconButton
+                size="lg"
+                className="p-4"
+                tooltip="New thread"
+                variant="ghost"
+                onClick={() => setThreadId(null)}
+              >
+                <SquarePen className="size-5" />
+              </TooltipIconButton>
+            </div>
 
             <div className="absolute inset-x-0 top-full h-5 bg-gradient-to-b from-background to-background/0" />
           </div>
@@ -287,7 +328,7 @@ export function Thread() {
         <StickToBottom className="relative flex-1 overflow-hidden">
           <StickyToBottomContent
             className={cn(
-              "absolute inset-0 overflow-y-scroll [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-track]:bg-transparent",
+              "absolute px-4 inset-0 overflow-y-scroll [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-track]:bg-transparent",
               !chatStarted && "flex flex-col items-stretch mt-[25vh]",
               chatStarted && "grid grid-rows-[1fr_auto]",
             )}
@@ -312,13 +353,23 @@ export function Thread() {
                       />
                     ),
                   )}
+                {/* Special rendering case where there are no AI/tool messages, but there is an interrupt.
+                    We need to render it outside of the messages list, since there are no messages to render */}
+                {hasNoAIOrToolMessages && !!stream.interrupt && (
+                  <AssistantMessage
+                    key="interrupt-msg"
+                    message={undefined}
+                    isLoading={isLoading}
+                    handleRegenerate={handleRegenerate}
+                  />
+                )}
                 {isLoading && !firstTokenReceived && (
                   <AssistantMessageLoading />
                 )}
               </>
             }
             footer={
-              <div className="sticky flex flex-col items-center gap-8 bottom-0 px-4 bg-white">
+              <div className="sticky flex flex-col items-center gap-8 bottom-0 bg-white">
                 {!chatStarted && (
                   <div className="flex gap-3 items-center">
                     <LangGraphLogoSVG className="flex-shrink-0 h-8" />
@@ -339,7 +390,12 @@ export function Thread() {
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey && !e.metaKey) {
+                        if (
+                          e.key === "Enter" &&
+                          !e.shiftKey &&
+                          !e.metaKey &&
+                          !e.nativeEvent.isComposing
+                        ) {
                           e.preventDefault();
                           const el = e.target as HTMLElement | undefined;
                           const form = el?.closest("form");

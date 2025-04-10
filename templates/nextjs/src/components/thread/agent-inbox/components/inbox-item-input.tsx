@@ -28,7 +28,7 @@ function ArgsRenderer({ args }: { args: Record<string, any> }) {
       {Object.entries(args).map(([k, v]) => {
         let value = "";
         if (["string", "number"].includes(typeof v)) {
-          value = v as string;
+          value = v.toString();
         } else {
           value = JSON.stringify(v, null);
         }
