@@ -23,12 +23,14 @@ cp .env.example .env
 When running the Chat UI, it will prompt you to enter your deployment URL, assistant ID, and LangSmith API key. If you want to hardcode these values, and bypass the initial setup form, you can set the following environment variables inside `apps/web/.env`:
 
 If using Vite:
+
 ```bash
 VITE_API_URL=http://localhost:2024
 VITE_ASSISTANT_ID=agent
 ```
 
 If using Next.js:
+
 ```bash
 NEXT_PUBLIC_API_URL=http://localhost:2024
 NEXT_PUBLIC_ASSISTANT_ID=agent
