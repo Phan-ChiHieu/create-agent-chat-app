@@ -129,8 +129,10 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   // Get environment variables
   const envApiUrl: string | undefined = process.env.NEXT_PUBLIC_API_URL;
-  const envAssistantId: string | undefined = process.env.NEXT_PUBLIC_ASSISTANT_ID;
-  const envApiKey: string | undefined = process.env.NEXT_PUBLIC_LANGSMITH_API_KEY;
+  const envAssistantId: string | undefined =
+    process.env.NEXT_PUBLIC_ASSISTANT_ID;
+  const envApiKey: string | undefined =
+    process.env.NEXT_PUBLIC_LANGSMITH_API_KEY;
 
   // Use URL params with env var fallbacks
   const [apiUrl, setApiUrl] = useQueryState("apiUrl", {
