@@ -130,7 +130,6 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
   // Get environment variables
   const envApiUrl: string | undefined = import.meta.env.VITE_API_URL;
   const envAssistantId: string | undefined = import.meta.env.VITE_ASSISTANT_ID;
-  const envApiKey: string | undefined = import.meta.env.VITE_LANGSMITH_API_KEY;
 
   // Use URL params with env var fallbacks
   const [apiUrl, setApiUrl] = useQueryState("apiUrl", {
@@ -143,7 +142,7 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
   // For API key, use localStorage with env var fallback
   const [apiKey, _setApiKey] = useState(() => {
     const storedKey = getApiKey();
-    return storedKey || envApiKey || "";
+    return storedKey || "";
   });
 
   const setApiKey = (key: string) => {
@@ -155,7 +154,7 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
   const finalApiUrl = apiUrl || envApiUrl;
   const finalAssistantId = assistantId || envAssistantId;
 
-  // If we're missing any required values, show the form
+  // Show the form if we: don't have an API URL, or don't have an assistant ID
   if (!finalApiUrl || !finalAssistantId) {
     return (
       <div className="flex items-center justify-center min-h-screen w-full p-4">
