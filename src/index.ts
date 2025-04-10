@@ -238,7 +238,7 @@ const createStartServersMessage = (
   framework: "nextjs" | "vite",
 ): string => {
   return `Then, start both the web, and LangGraph development servers with one command:
-  ${chalk.cyan(`${packageManager} dev`)}
+  ${chalk.cyan(`${packageManager} run dev`)}
 
 This will start the web server at:
   ${chalk.cyan(framework === "nextjs" ? "http://localhost:3000" : "http://localhost:5173")}

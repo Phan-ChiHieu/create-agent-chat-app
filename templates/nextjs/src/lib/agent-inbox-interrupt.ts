@@ -6,6 +6,7 @@ export function isAgentInboxInterruptSchema(
   const valueAsObject = Array.isArray(value) ? value[0] : value;
   return (
     valueAsObject &&
+    typeof valueAsObject === "object" &&
     "action_request" in valueAsObject &&
     typeof valueAsObject.action_request === "object" &&
     "config" in valueAsObject &&
